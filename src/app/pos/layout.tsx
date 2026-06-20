@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { headers } from 'next/headers';
 import { PosUserMenu } from '@/components/pos/PosUserMenu';
 import { PosClock } from '@/components/pos/PosClock';
+import { PosNetworkStatus } from '@/components/pos/PosNetworkStatus';
 
 export default async function PosLayout({ children }: { children: ReactNode }) {
   const headersList = await headers();
@@ -19,6 +20,8 @@ export default async function PosLayout({ children }: { children: ReactNode }) {
           <span className="text-xs text-indigo-200 hidden sm:block bg-indigo-800 px-2 py-0.5 rounded">Cabang Utama</span>
           <div className="h-4 w-px bg-indigo-500 hidden md:block"></div>
           <PosClock />
+          <div className="h-4 w-px bg-indigo-500 hidden md:block"></div>
+          <PosNetworkStatus />
         </div>
         <div className="flex items-center gap-3">
           {role !== 'kasir' && (

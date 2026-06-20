@@ -4,30 +4,52 @@ import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut';
 
 interface ProductSearchProps {
   onAddProduct: (product: ProductCashierView) => void;
+  /** Whether the app is online. If false, uses searchOffline. */
+  isOnline?: boolean;
+  /** Offline search function from useCatalogSync. */
+  searchOffline?: (query: string) => Promise<ProductCashierView[]>;
 }
 
-export function ProductSearch({ onAddProduct }: ProductSearchProps) {
+export function ProductSearch({ onAddProduct, isOnline = true, searchOffline }: ProductSearchProps) {
   const [search, setSearch] = useState('');
   const [products, setProducts] = useState<ProductCashierView[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch products
+  // Fetch products (online or offline)
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const params = new URLSearchParams({ limit: '20' });
-        if (search) params.set('search', search);
-        const res = await fetch(`/api/products?${params}`);
-        const data = await res.json();
-        if (data.success) {
-          setProducts(data.data);
-          setSelectedIndex(0); // Reset selection
+        if (!isOnline && searchOffline) {
+          // Offline: search from IndexedDB
+          const results = await searchOffline(search);
+          setProducts(results);
+          setSelectedIndex(0);
+        } else {
+          // Online: fetch from API
+          const params = new URLSearchParams({ limit: '20' });
+          if (search) params.set('search', search);
+          const res = await fetch(`/api/products?${params}`);
+          const data = await res.json();
+          if (data.success) {
+            setProducts(data.data);
+            setSelectedIndex(0);
+          }
         }
       } catch (err) {
         console.error('Failed to fetch products', err);
+        // If API fails, try offline fallback
+        if (searchOffline) {
+          try {
+            const results = await searchOffline(search);
+            setProducts(results);
+            setSelectedIndex(0);
+          } catch {
+            // IndexedDB also failed
+          }
+        }
       } finally {
         setLoading(false);
       }
@@ -35,7 +57,7 @@ export function ProductSearch({ onAddProduct }: ProductSearchProps) {
 
     const timeout = setTimeout(fetchProducts, 300);
     return () => clearTimeout(timeout);
-  }, [search]);
+  }, [search, isOnline, searchOffline]);
 
   // Handle Keyboard navigation within the product list
   useKeyboardShortcut([
@@ -92,15 +114,22 @@ export function ProductSearch({ onAddProduct }: ProductSearchProps) {
     <div className="flex flex-col h-full bg-slate-50 p-4">
       {/* Search Input */}
       <div className="mb-4">
-        <input
-          ref={searchInputRef}
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Ketik nama, SKU, atau barcode produk..."
-          className="w-full px-4 py-3 text-lg border border-slate-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow bg-white"
-          autoFocus
-        />
+        <div className="relative">
+          <input
+            ref={searchInputRef}
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Ketik nama, SKU, atau barcode produk..."
+            className="w-full px-4 py-3 text-lg border border-slate-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow bg-white pr-24"
+            autoFocus
+          />
+          {!isOnline && (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-medium bg-amber-100 text-amber-700 px-2 py-1 rounded-lg border border-amber-200">
+              Offline Mode
+            </span>
+          )}
+        </div>
         <div className="text-xs text-slate-500 mt-2 flex gap-4">
           <span><kbd className="bg-slate-200 px-1.5 py-0.5 rounded text-slate-700">↑</kbd> <kbd className="bg-slate-200 px-1.5 py-0.5 rounded text-slate-700">↓</kbd> Navigasi</span>
           <span><kbd className="bg-slate-200 px-1.5 py-0.5 rounded text-slate-700">Enter</kbd> Tambah</span>
