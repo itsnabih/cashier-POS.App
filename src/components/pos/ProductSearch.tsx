@@ -16,6 +16,18 @@ export function ProductSearch({ onAddProduct, isOnline = true, searchOffline }: 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
+
+  // Scroll into view when selectedIndex changes
+  useEffect(() => {
+    const selectedEl = itemRefs.current[selectedIndex];
+    if (selectedEl) {
+      selectedEl.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    }
+  }, [selectedIndex]);
 
   // Fetch products (online or offline)
   useEffect(() => {
@@ -150,6 +162,7 @@ export function ProductSearch({ onAddProduct, isOnline = true, searchOffline }: 
               return (
                 <li
                   key={product.id}
+                  ref={(el) => { itemRefs.current[idx] = el; }}
                   className={`p-4 flex items-center justify-between cursor-pointer transition-colors ${
                     isSelected ? 'bg-indigo-50 border-l-4 border-indigo-500' : 'hover:bg-slate-50 border-l-4 border-transparent'
                   }`}
