@@ -9,10 +9,10 @@ import { cookies } from 'next/headers';
 // ============================================================
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'babypos-default-secret-change-in-production'
+  process.env.JWT_SECRET || 'sumberbabyshop-default-secret-change-in-production'
 );
 
-const COOKIE_NAME = 'babypos-session';
+const COOKIE_NAME = 'sumberbabyshop-session';
 const TOKEN_EXPIRY = '8h'; // Shift-length session
 const BCRYPT_ROUNDS = 10;
 

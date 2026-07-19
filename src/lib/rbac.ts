@@ -64,11 +64,6 @@ export const PERMISSIONS = {
   // ---- POS ----
   POS_ACCESS: 'pos:access',
 
-  // ---- Suppliers ----
-  SUPPLIER_VIEW: 'supplier:view',
-  SUPPLIER_CREATE: 'supplier:create',
-  SUPPLIER_EDIT: 'supplier:edit',
-  SUPPLIER_DELETE: 'supplier:delete',
 
   // ---- Purchases (Penerimaan Barang) ----
   PURCHASE_VIEW: 'purchase:view',
@@ -105,10 +100,6 @@ const ADMIN_PERMISSIONS: Permission[] = [
   PERMISSIONS.CATEGORY_CREATE,
   PERMISSIONS.CATEGORY_EDIT,
   PERMISSIONS.CATEGORY_DELETE,
-  // Suppliers
-  PERMISSIONS.SUPPLIER_VIEW,
-  PERMISSIONS.SUPPLIER_CREATE,
-  PERMISSIONS.SUPPLIER_EDIT,
   // Purchases (penerimaan barang)
   PERMISSIONS.PURCHASE_VIEW,
   PERMISSIONS.PURCHASE_CREATE,
@@ -196,10 +187,9 @@ export const ROUTE_RULES: RouteRule[] = [
   { path: '/dashboard', permissions: [PERMISSIONS.DASHBOARD_VIEW], matchType: 'exact' },
   // Products
   { path: '/products', permissions: [PERMISSIONS.PRODUCT_VIEW], matchType: 'prefix' },
-  // Categories
-  { path: '/categories', permissions: [PERMISSIONS.CATEGORY_VIEW], matchType: 'prefix' },
-  // Suppliers
-  { path: '/suppliers', permissions: [PERMISSIONS.SUPPLIER_VIEW], matchType: 'prefix' },
+  // Discounts
+  { path: '/discounts', permissions: [PERMISSIONS.CATEGORY_VIEW], matchType: 'prefix' },
+
   // Purchases
   { path: '/purchases', permissions: [PERMISSIONS.PURCHASE_VIEW], matchType: 'prefix' },
   // Stock Opname

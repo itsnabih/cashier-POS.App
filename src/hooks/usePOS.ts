@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { type CartItem, type POSCart } from '@/types/pos';
 import { type ProductCashierView } from '@/types/product';
+import { calculateProductDiscount } from '@/lib/discount';
 
 const MAX_TABS = 5;
 
@@ -11,7 +12,7 @@ const createEmptyCart = (): POSCart => ({
   total: 0,
 });
 
-export function usePOS() {
+export function usePOS(settings: Record<string, string> = {}) {
   const [tabs, setTabs] = useState<POSCart[]>(Array(MAX_TABS).fill(null).map(createEmptyCart));
   const [activeTab, setActiveTab] = useState<number>(0);
 
@@ -22,9 +23,10 @@ export function usePOS() {
   }, []);
 
   const calculateCart = (items: CartItem[]): POSCart => {
-    const subtotal = items.reduce((acc, item) => acc + item.unitPrice * item.quantity, 0);
-    // Discount logic can be added here if needed
-    const discount = 0;
+    // subtotal = original price * quantity
+    const subtotal = items.reduce((acc, item) => acc + item.originalPrice * item.quantity, 0);
+    // discount = total discount per item * quantity
+    const discount = items.reduce((acc, item) => acc + item.discount * item.quantity, 0);
     const total = subtotal - discount;
     return { items, subtotal, discount, total };
   };
@@ -52,6 +54,12 @@ export function usePOS() {
         );
       } else {
         if (product.stock <= 0) return cart.items;
+        
+        // Calculate dynamic discount based on parameters
+        const discountPct = calculateProductDiscount(product, settings);
+        const discountAmount = Math.floor(product.sellPrice * (discountPct / 100));
+        const finalPrice = product.sellPrice - discountAmount;
+
         return [
           ...cart.items,
           {
@@ -60,7 +68,9 @@ export function usePOS() {
             sku: product.sku,
             barcode: product.barcode,
             name: product.name,
-            unitPrice: product.sellPrice,
+            originalPrice: product.sellPrice,
+            unitPrice: finalPrice,
+            discount: discountAmount,
             quantity: 1,
             stock: product.stock,
             unit: product.unit,
@@ -68,7 +78,7 @@ export function usePOS() {
         ];
       }
     });
-  }, [updateCurrentTab]);
+  }, [updateCurrentTab, settings]);
 
   const updateQuantity = useCallback((cartItemId: string, delta: number) => {
     updateCurrentTab((cart) => {

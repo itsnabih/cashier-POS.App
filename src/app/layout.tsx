@@ -4,10 +4,10 @@ import { ToastProvider } from '@/hooks/useToast';
 import { ServiceWorkerRegistrar } from '@/components/ServiceWorkerRegistrar';
 
 export const metadata: Metadata = {
-  title: 'BabyPOS',
-  description: 'Sistem Kasir & Inventaris UMKM',
+  title: 'Sumber Baby Shop',
+  description: 'Sistem Kasir dan Manajemen Inventaris UMKM',
   manifest: '/manifest.json',
-  themeColor: '#4f46e5',
+  themeColor: '#E88AB8',
 };
 
 export default function RootLayout({
@@ -24,7 +24,7 @@ export default function RootLayout({
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="BabyPOS" />
+        <meta name="apple-mobile-web-app-title" content="Sumber Baby Shop" />
       </head>
       <body>
         <ToastProvider>

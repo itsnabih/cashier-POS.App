@@ -17,6 +17,7 @@ export interface Product {
   imageUrl: string | null;
   isActive: boolean;
   expiredDate: string | null;
+  lastSoldAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -39,6 +40,7 @@ export interface ProductRow {
   image_url: string | null;
   is_active: boolean;
   expired_date: string | null;
+  last_sold_at?: string | null; // From subquery, might be optional in some contexts
   created_at: string;
   updated_at: string;
 }
@@ -60,6 +62,7 @@ export function mapProductRow(row: ProductRow): Product {
     imageUrl: row.image_url,
     isActive: row.is_active,
     expiredDate: row.expired_date,
+    lastSoldAt: row.last_sold_at ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -81,6 +84,7 @@ export function mapProductRowCashier(row: ProductRow): ProductCashierView {
     imageUrl: row.image_url,
     isActive: row.is_active,
     expiredDate: row.expired_date,
+    lastSoldAt: row.last_sold_at ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

@@ -18,6 +18,19 @@ function fmtRp(cents: number): string {
   return 'Rp ' + (cents / 100).toLocaleString('id-ID');
 }
 
+// ---- Format date to dd/mm/yyyy ----
+function fmtDate(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  } catch {
+    return dateStr;
+  }
+}
+
 // ---- Common styles ----
 const STYLES = {
   header: { fontSize: 16, bold: true, alignment: 'center' as const, margin: [0, 0, 0, 4] as [number, number, number, number] },
@@ -31,7 +44,7 @@ const STYLES = {
 
 function generateFooter(): any {
   return {
-    text: `Dicetak: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB — BabyPOS`,
+    text: `Dicetak: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB — Sumber Baby shop`,
     alignment: 'center',
     fontSize: 7,
     color: '#999999',
@@ -71,7 +84,7 @@ export function exportProfitLossPDF(data: ProfitLossData) {
       { text: 'Margin', style: 'tableHeader', alignment: 'right' as const },
     ],
     ...data.daily.map((row) => [
-      { text: row.date, style: 'tableCell' },
+      { text: fmtDate(row.date), style: 'tableCell' },
       { text: fmtRp(row.revenue), style: 'tableCellRight' },
       { text: fmtRp(row.cogs), style: 'tableCellRight' },
       { text: fmtRp(row.profit), style: 'tableCellRight', color: row.profit >= 0 ? '#16A34A' : '#DC2626' },
@@ -175,7 +188,7 @@ export function exportCashFlowPDF(data: CashFlowData) {
       { text: 'Transfer', style: 'tableHeader', alignment: 'right' as const },
     ],
     ...data.daily.map((d) => [
-      { text: d.date, style: 'tableCell' },
+      { text: fmtDate(d.date), style: 'tableCell' },
       { text: String(d.transactionCount), style: 'tableCellRight' },
       { text: fmtRp(d.totalAmount), style: 'tableCellRight' },
       { text: fmtRp(d.cashAmount), style: 'tableCellRight' },

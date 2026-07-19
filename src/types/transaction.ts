@@ -18,6 +18,7 @@ export interface Transaction {
   id: string;
   receiptNumber: string;
   cashierId: string;
+  cashierName?: string;
   subtotal: number;
   discount: number;
   tax: number;
@@ -28,6 +29,7 @@ export interface Transaction {
   status: 'completed' | 'voided' | 'pending';
   notes: string | null;
   voidedBy: string | null;
+  voidedByName?: string;
   voidedAt: string | null;
   voidReason: string | null;
   syncedFrom: string | null;
@@ -39,6 +41,7 @@ export interface TransactionRow {
   id: string;
   receipt_number: string;
   cashier_id: string;
+  cashier_name?: string;
   subtotal: string;
   discount: string;
   tax: string;
@@ -49,6 +52,7 @@ export interface TransactionRow {
   status: 'completed' | 'voided' | 'pending';
   notes: string | null;
   voided_by: string | null;
+  voided_by_name?: string;
   voided_at: string | null;
   void_reason: string | null;
   synced_from: string | null;
@@ -72,6 +76,7 @@ export function mapTransactionRow(row: TransactionRow): Transaction {
     id: row.id,
     receiptNumber: row.receipt_number,
     cashierId: row.cashier_id,
+    cashierName: row.cashier_name,
     subtotal: Number(row.subtotal),
     discount: Number(row.discount),
     tax: Number(row.tax),
@@ -82,6 +87,7 @@ export function mapTransactionRow(row: TransactionRow): Transaction {
     status: row.status,
     notes: row.notes,
     voidedBy: row.voided_by,
+    voidedByName: row.voided_by_name,
     voidedAt: row.voided_at,
     voidReason: row.void_reason,
     syncedFrom: row.synced_from,

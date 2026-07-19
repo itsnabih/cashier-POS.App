@@ -58,8 +58,8 @@ export async function GET(request: NextRequest) {
     // Determine columns based on role (kasir cannot see buy_price)
     const canSeeBuyPrice = hasPermission(user.role, PERMISSIONS.PRODUCT_VIEW_BUY_PRICE);
     const selectColumns = canSeeBuyPrice
-      ? 'p.*, c.name as category_name'
-      : 'p.id, p.category_id, p.sku, p.barcode, p.name, p.description, p.sell_price, p.stock, p.min_stock, p.unit, p.image_url, p.is_active, p.expired_date, p.created_at, p.updated_at, c.name as category_name';
+      ? 'p.*, c.name as category_name, (SELECT MAX(t.created_at) FROM transaction_items ti JOIN transactions t ON ti.transaction_id = t.id WHERE ti.product_id = p.id) as last_sold_at'
+      : 'p.id, p.category_id, p.sku, p.barcode, p.name, p.description, p.sell_price, p.stock, p.min_stock, p.unit, p.image_url, p.is_active, p.expired_date, p.created_at, p.updated_at, c.name as category_name, (SELECT MAX(t.created_at) FROM transaction_items ti JOIN transactions t ON ti.transaction_id = t.id WHERE ti.product_id = p.id) as last_sold_at';
 
     // Fetch rows
     const rows = await query<ProductRow & { category_name: string }>(

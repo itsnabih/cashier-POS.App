@@ -44,7 +44,7 @@ export default function PosPage() {
     },
   ]);
 
-  const handleProcessPayment = async (method: 'cash' | 'qris' | 'transfer' | 'bon', amount: number, notes: string) => {
+  const handleProcessPayment = async (method: 'cash' | 'qris' | 'transfer', amount: number, notes: string) => {
     try {
       // In a real app, this would be an API call to /api/transactions
       /*

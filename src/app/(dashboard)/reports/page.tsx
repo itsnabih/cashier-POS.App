@@ -22,6 +22,18 @@ function formatDate(d: Date): string {
   return d.toISOString().split('T')[0];
 }
 
+function fmtDate(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  } catch {
+    return dateStr;
+  }
+}
+
 function getPresetDates(preset: DatePreset): { from: string; to: string } {
   const today = new Date();
   const todayStr = formatDate(today);
@@ -185,7 +197,7 @@ export default function ReportsPage() {
               onClick={() => setActiveTab(tab.key)}
               className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.key
-                  ? 'text-indigo-600 border-indigo-600'
+                  ? 'text-baby-600 border-baby-600'
                   : 'text-slate-500 border-transparent hover:text-slate-700 hover:border-slate-300'
               }`}
             >
@@ -203,7 +215,7 @@ export default function ReportsPage() {
             onClick={() => handlePreset(p.key)}
             className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
               preset === p.key
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-baby-600 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -215,14 +227,14 @@ export default function ReportsPage() {
             type="date"
             value={dateFrom}
             onChange={(e) => { setDateFrom(e.target.value); setPreset('custom'); }}
-            className="px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-baby-500"
           />
           <span className="text-xs text-slate-400">s/d</span>
           <input
             type="date"
             value={dateTo}
             onChange={(e) => { setDateTo(e.target.value); setPreset('custom'); }}
-            className="px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-baby-500"
           />
         </div>
       </div>
@@ -230,7 +242,7 @@ export default function ReportsPage() {
       {/* Loading */}
       {loading && (
         <div className="text-center py-12 text-slate-400">
-          <div className="inline-block w-6 h-6 border-2 border-indigo-300 border-t-transparent rounded-full animate-spin mb-3" />
+          <div className="inline-block w-6 h-6 border-2 border-baby-300 border-t-transparent rounded-full animate-spin mb-3" />
           <p className="text-sm">Memuat data laporan...</p>
         </div>
       )}
@@ -257,7 +269,7 @@ function ProfitLossReport({ data }: { data: any }) {
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="gap-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
+      <div className="flex flex-wrap gap-4">
         <SummaryCard label="Total Omset" value={fmtRp(data.summary.totalRevenue)} />
         <SummaryCard label="Total HPP" value={fmtRp(data.summary.totalCogs)} />
         <SummaryCard label="Total Profit" value={fmtRp(data.summary.totalProfit)} />
@@ -282,7 +294,7 @@ function ProfitLossReport({ data }: { data: any }) {
             ) : (
               data.daily.map((row: any) => (
                 <tr key={row.date} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-4 py-3 text-slate-800">{row.date}</td>
+                  <td className="px-4 py-3 text-slate-800">{fmtDate(row.date)}</td>
                   <td className="px-4 py-3 text-right text-slate-700 font-medium">{fmtRp(row.revenue)}</td>
                   <td className="px-4 py-3 text-right text-slate-500">{fmtRp(row.cogs)}</td>
                   <td className={`px-4 py-3 text-right font-bold ${row.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
@@ -310,7 +322,7 @@ function CashFlowReport({ data }: { data: any }) {
   return (
     <div className="space-y-6">
       {/* Summary */}
-      <div className="gap-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
+      <div className="flex flex-wrap gap-4">
         <SummaryCard label="Grand Total" value={fmtRp(data.summary.grandTotal)} sub={`${data.summary.transactionCount} transaksi`} />
         {data.byMethod.map((m: any) => (
           <SummaryCard key={m.method} label={methodLabel(m.method)} value={fmtRp(m.totalAmount)} sub={`${m.percentage}% · ${m.transactionCount} trx`} />
@@ -336,7 +348,7 @@ function CashFlowReport({ data }: { data: any }) {
             ) : (
               data.daily.map((row: any) => (
                 <tr key={row.date} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-4 py-3 text-slate-800">{row.date}</td>
+                  <td className="px-4 py-3 text-slate-800">{fmtDate(row.date)}</td>
                   <td className="px-4 py-3 text-right text-slate-500">{row.transactionCount}</td>
                   <td className="px-4 py-3 text-right text-slate-700 font-bold">{fmtRp(row.totalAmount)}</td>
                   <td className="px-4 py-3 text-right text-emerald-600">{fmtRp(row.cashAmount)}</td>
@@ -360,7 +372,7 @@ function BestSellersReport({ data }: { data: any }) {
   return (
     <div className="space-y-6">
       {/* Summary */}
-      <div className="gap-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
+      <div className="flex flex-wrap gap-4">
         <SummaryCard label="Total Qty Terjual" value={data.summary.totalQuantity.toLocaleString('id-ID')} />
         <SummaryCard label="Total Penjualan" value={fmtRp(data.summary.totalRevenue)} />
         <SummaryCard label="Total Transaksi" value={data.summary.transactionCount.toLocaleString('id-ID')} />
@@ -413,10 +425,10 @@ function BestSellersReport({ data }: { data: any }) {
 
 function SummaryCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="bg-white rounded-xl p-5 shadow-md" style={{ border: '1px solid #cbd5e1' }}>
-      <p className="font-semibold" style={{ fontSize: '0.875rem', color: '#475569' }}>{label}</p>
-      <p className="font-bold truncate" style={{ fontSize: '1.5rem', color: '#000000', marginTop: '0.5rem' }}>{value}</p>
-      {sub && <p className="font-medium mt-1" style={{ fontSize: '0.75rem', color: '#64748b' }}>{sub}</p>}
+    <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200 flex-1 min-w-[220px] max-w-[320px]">
+      <p className="font-semibold text-sm text-gray-500">{label}</p>
+      <p className="font-bold text-2xl text-gray-900 mt-2 truncate">{value}</p>
+      {sub && <p className="font-medium text-xs text-gray-500 mt-1">{sub}</p>}
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS, type Permission } from '@/lib/rbac';
@@ -20,8 +21,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: 'grid', permission: PERMISSIONS.DASHBOARD_VIEW },
   { label: 'Produk', href: '/products', icon: 'package', permission: PERMISSIONS.PRODUCT_VIEW },
-  { label: 'Kategori', href: '/categories', icon: 'tag', permission: PERMISSIONS.CATEGORY_VIEW },
-  { label: 'Supplier', href: '/suppliers', icon: 'truck', permission: PERMISSIONS.SUPPLIER_VIEW },
+  { label: 'Diskon', href: '/discounts', icon: 'percent', permission: PERMISSIONS.CATEGORY_VIEW },
   { label: 'Pembelian', href: '/purchases', icon: 'clipboard', permission: PERMISSIONS.PURCHASE_VIEW },
   { label: 'Stok Opname', href: '/stock-opname', icon: 'search', permission: PERMISSIONS.STOCK_OPNAME_VIEW },
   { label: 'Transaksi', href: '/transactions', icon: 'receipt', permission: PERMISSIONS.TRANSACTION_VIEW },
@@ -46,6 +46,7 @@ function NavIcon({ name, className }: { name: string; className?: string }) {
     settings: <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>,
     'chevron-left': <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>,
     'chevron-right': <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>,
+    percent: <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0c1.1.128 1.907 1.077 1.907 2.185zM9.75 9h.008v.008H9.75V9zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 4.5h.008v.008h-.008V13.5zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>,
     'log-out': <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>,
     pos: <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"/></svg>,
   };
@@ -69,20 +70,25 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-screen bg-slate-900 text-white flex flex-col transition-[width] duration-200 z-40 ${
+      className={`fixed left-0 top-0 h-screen bg-white/80 backdrop-blur-xl border-r border-sky-100 flex flex-col transition-[width] duration-300 ease-in-out z-40 shadow-[4px_0_24px_rgba(0,0,0,0.02)] ${
         collapsed ? 'w-16' : 'w-56'
       }`}
     >
       {/* Header */}
-      <div className="flex items-center h-14 px-4 border-b border-slate-700/50 flex-shrink-0">
+      <div className="flex items-center h-16 px-4 border-b border-sky-50 flex-shrink-0">
         {!collapsed && (
-          <span className="text-sm font-semibold tracking-tight text-slate-100">
-            BabyPOS
-          </span>
+          <div className="flex items-center gap-2 overflow-hidden">
+            <div className="p-1 rounded-md flex items-center justify-center flex-shrink-0">
+              <Image src="/icons/Logo sumber baby shop.png" alt="Logo" width={32} height={32} className="object-contain drop-shadow-sm" />
+            </div>
+            <span className="text-sm font-bold tracking-tight text-slate-800 truncate">
+              Sumber Baby Shop
+            </span>
+          </div>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className={`p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white transition-colors ${
+          className={`p-1.5 rounded-lg hover:bg-sky-50 text-slate-400 hover:text-brand-blue transition-colors duration-200 active-scale ${
             collapsed ? 'mx-auto' : 'ml-auto'
           }`}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -92,22 +98,22 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-2 overflow-y-auto">
-        <ul className="space-y-0.5 px-2">
+      <nav className="flex-1 py-4 overflow-y-auto">
+        <ul className="space-y-1 px-3">
           {visibleItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             return (
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                  className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 hover-lift ${
                     isActive
-                      ? 'bg-indigo-600/20 text-indigo-300'
-                      : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                      ? 'bg-brand-blue text-white shadow-md shadow-brand-blue/20'
+                      : 'text-slate-500 hover:bg-brand-sky-light/50 hover:text-brand-blue'
                   } ${collapsed ? 'justify-center px-0' : ''}`}
                   title={collapsed ? item.label : undefined}
                 >
-                  <NavIcon name={item.icon} className="w-5 h-5 flex-shrink-0" />
+                  <NavIcon name={item.icon} className={`w-5 h-5 flex-shrink-0 transition-colors ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-brand-blue'}`} />
                   {!collapsed && <span>{item.label}</span>}
                 </Link>
               </li>
@@ -117,15 +123,15 @@ export default function Sidebar() {
 
         {/* POS quick access */}
         {hasPermission(PERMISSIONS.POS_ACCESS) && (
-          <div className="px-2 mt-4 pt-4 border-t border-slate-700/50">
+          <div className="px-3 mt-6 pt-6 border-t border-sky-50">
             <Link
               href="/pos"
-              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm bg-indigo-600 text-white hover:bg-indigo-500 transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold bg-brand-pink text-white hover:bg-brand-pink-dark hover-lift shadow-md shadow-brand-pink/20 transition-all duration-200 ${
                 collapsed ? 'justify-center px-0' : ''
               }`}
               title={collapsed ? 'Buka POS' : undefined}
             >
-              <NavIcon name="pos" className="w-5 h-5 flex-shrink-0" />
+              <NavIcon name="pos" className="w-5 h-5 flex-shrink-0 text-white" />
               {!collapsed && <span>Buka POS</span>}
             </Link>
           </div>
@@ -133,16 +139,16 @@ export default function Sidebar() {
       </nav>
 
       {/* User info */}
-      <div className="border-t border-slate-700/50 p-3 flex-shrink-0">
+      <div className="border-t border-sky-50 p-4 flex-shrink-0 bg-slate-50/50">
         {user && (
           <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
-            <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-medium text-slate-300 flex-shrink-0">
+            <div className="w-9 h-9 rounded-full bg-brand-sky-light flex items-center justify-center text-sm font-bold text-brand-blue flex-shrink-0 shadow-inner">
               {user.fullName.charAt(0).toUpperCase()}
             </div>
             {!collapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-slate-200 truncate">{user.fullName}</p>
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider">
+                <p className="text-sm font-bold text-slate-800 truncate">{user.fullName}</p>
+                <p className="text-[11px] text-brand-blue font-semibold uppercase tracking-wider">
                   {roleLabel[user.role] || user.role}
                 </p>
               </div>
@@ -150,11 +156,11 @@ export default function Sidebar() {
             {!collapsed && (
               <button
                 onClick={logout}
-                className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-slate-800 transition-colors"
+                className="p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors duration-200 active-scale"
                 title="Logout"
                 aria-label="Logout"
               >
-                <NavIcon name="log-out" className="w-4 h-4" />
+                <NavIcon name="log-out" className="w-5 h-5" />
               </button>
             )}
           </div>

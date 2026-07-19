@@ -18,7 +18,7 @@ export interface TransactionPayload {
   subtotal: number;
   discount: number;
   total: number;
-  paymentMethod: 'cash' | 'qris' | 'transfer' | 'bon';
+  paymentMethod: 'cash' | 'qris' | 'transfer';
   paymentAmount: number;
   changeAmount: number;
   notes: string;

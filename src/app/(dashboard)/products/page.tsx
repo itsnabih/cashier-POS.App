@@ -80,19 +80,37 @@ export default function ProductsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Daftar Produk</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Produk</h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            {pagination.total} produk terdaftar
+            Kelola produk dan kategori toko
           </p>
         </div>
         {canCreate && (
           <Link
             href="/products/new"
-            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-500 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-white bg-baby-600 rounded-md hover:bg-baby-500 transition-colors"
           >
             Tambah Produk
           </Link>
         )}
+      </div>
+
+      {/* Tab navigation */}
+      <div className="flex gap-0 border-b border-slate-200">
+        <span
+          className="flex items-center gap-1.5 px-4 pb-2.5 text-sm font-medium transition-colors border-b-2 -mb-px border-b-baby-500 text-gray-800 cursor-default"
+        >
+          Daftar Produk
+          <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 rounded-full">
+            {pagination.total}
+          </span>
+        </span>
+        <Link
+          href="/products/categories"
+          className="flex items-center gap-1.5 px-4 pb-2.5 text-sm font-medium transition-colors border-b-2 -mb-px border-b-transparent text-slate-400 hover:text-slate-600"
+        >
+          Kategori
+        </Link>
       </div>
 
       {/* Search */}
@@ -102,7 +120,7 @@ export default function ProductsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Cari nama, SKU, atau barcode..."
-          className="w-full max-w-sm px-3 py-2 text-sm border border-slate-200 rounded-md bg-slate-50 focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors text-slate-900"
+          className="w-full max-w-sm px-3 py-2 text-sm border border-gray-200 rounded-md bg-gray-50 focus:bg-white focus:border-baby-500 focus:ring-1 focus:ring-baby-500 outline-none transition-colors text-gray-900"
         />
       </div>
 
@@ -192,7 +210,7 @@ export default function ProductsPage() {
                     <td className="py-2.5 px-3 text-right">
                       <Link
                         href={`/products/${product.id}/edit`}
-                        className="text-xs text-indigo-600 hover:text-indigo-500 font-medium"
+                        className="text-xs text-baby-600 hover:text-baby-500 font-medium"
                       >
                         Edit
                       </Link>

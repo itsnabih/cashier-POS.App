@@ -3,12 +3,13 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import Image from 'next/image';
+import './login.css';
 
 // ============================================================
-// Login page — clean enterprise aesthetic, no emoji
+// Login page — modern split-panel design
 // ============================================================
 
-// Reason code → display text mapping (frontend-only)
 const REASON_MESSAGES: Record<string, string> = {
   unauthenticated: 'Silakan login terlebih dahulu',
   session_expired: 'Sesi telah berakhir, silakan login ulang',
@@ -20,6 +21,7 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const reason = searchParams.get('reason');
@@ -45,7 +47,6 @@ function LoginForm() {
         return;
       }
 
-      // Redirect based on role
       const role = data.data.user.role;
       const defaultPaths: Record<string, string> = {
         owner: '/dashboard',
@@ -60,75 +61,91 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <h1 className="text-xl font-semibold text-white tracking-tight">BabyPOS</h1>
-          <p className="text-sm text-slate-500 mt-1">Sistem Kasir &amp; Inventaris</p>
+    <div className="login-page-container">
+      <div className="login-card">
+        
+        {/* Left panel */}
+        <div className="login-left">
+          <div className="login-brand-header">
+            <span className="login-brand-name">SUMBER BABY SHOP</span>
+          </div>
+
+          <div className="login-left-center">
+            <div className="login-pos-icon-wrapper">
+              <Image src="/icons/Logo sumber baby shop.png" alt="Logo" width={120} height={120} className="object-contain drop-shadow-lg" priority />
+            </div>
+            <h1 className="login-pos-title">Point of<br/>Sale</h1>
+          </div>
         </div>
 
-        {/* Card */}
-        <div className="bg-white rounded-lg shadow-xl p-6">
-          {reasonMessage && (
-            <div className="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
-              {reasonMessage}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="login-username" className="block text-xs font-medium text-slate-600 mb-1.5">
-                Username
-              </label>
-              <input
-                id="login-username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md bg-slate-50 focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors text-slate-900"
-                placeholder="Masukkan username"
-                autoFocus
-                required
-                autoComplete="username"
-              />
+        {/* Right panel */}
+        <div className="login-right">
+          {/* Decorative wave */}
+          <div className="login-wave-bg" />
+          
+          <div className="login-right-content">
+            {/* Mobile Header (Hidden on Desktop) */}
+            <div className="login-mobile-header block lg:hidden mb-6 text-center">
+              <Image src="/icons/Logo sumber baby shop.png" alt="Logo" width={48} height={48} className="mx-auto mb-2 object-contain" />
+              <h1 className="text-xl font-bold text-gray-800">SUMBER BABY SHOP</h1>
             </div>
 
-            <div>
-              <label htmlFor="login-password" className="block text-xs font-medium text-slate-600 mb-1.5">
-                Password
-              </label>
-              <input
-                id="login-password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md bg-slate-50 focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors text-slate-900"
-                placeholder="Masukkan password"
-                required
-                autoComplete="current-password"
-              />
-            </div>
+            <p className="login-subtitle">POINT OF SALE</p>
+            <h2 className="login-title">Sign in</h2>
 
-            {error && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
-                {error}
-              </p>
+            {reasonMessage && (
+              <div className="login-alert">
+                <span>{reasonMessage}</span>
+              </div>
             )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2 px-4 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {loading ? 'Memproses...' : 'Masuk'}
-            </button>
-          </form>
+            {error && (
+              <div className="login-alert error">
+                <span>{error}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="login-form">
+              <div className="login-field">
+                <input
+                  id="login-username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Username"
+                  autoFocus
+                  required
+                  autoComplete="username"
+                />
+              </div>
+
+              <div className="login-field">
+                <input
+                  id="login-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Password"
+                  required
+                  autoComplete="current-password"
+                />
+              </div>
+
+              <div className="login-forgot">
+                <a href="#">Forgotten your password?</a>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="login-submit"
+              >
+                {loading ? 'Processing...' : 'Masuk'}
+              </button>
+            </form>
+          </div>
         </div>
 
-        <p className="text-center text-xs text-slate-600 mt-6">
-          v0.1.0
-        </p>
       </div>
     </div>
   );
@@ -137,8 +154,10 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <span className="text-slate-500 text-sm">Memuat...</span>
+      <div className="login-page-container">
+        <div className="login-card" style={{ width: '100%', height: '500px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <h2>Memuat...</h2>
+        </div>
       </div>
     }>
       <LoginForm />

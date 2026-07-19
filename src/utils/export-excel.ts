@@ -12,6 +12,19 @@ function fmtRp(cents: number): string {
   return 'Rp ' + (cents / 100).toLocaleString('id-ID');
 }
 
+// ---- Format date to dd/mm/yyyy ----
+function fmtDate(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  } catch {
+    return dateStr;
+  }
+}
+
 // ---- Trigger download ----
 async function downloadWorkbook(workbook: ExcelJS.Workbook, filename: string) {
   const buffer = await workbook.xlsx.writeBuffer();
@@ -72,7 +85,7 @@ interface ProfitLossData {
 
 export async function exportProfitLossExcel(data: ProfitLossData) {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'BabyPOS';
+  wb.creator = 'Sumber Baby shop';
   wb.created = new Date();
 
   const ws = wb.addWorksheet('Laba Rugi');
@@ -113,7 +126,7 @@ export async function exportProfitLossExcel(data: ProfitLossData) {
   // Table data
   for (const row of data.daily) {
     const r = ws.addRow([
-      row.date,
+      fmtDate(row.date),
       row.revenue / 100,
       row.cogs / 100,
       row.profit / 100,
@@ -160,7 +173,7 @@ interface CashFlowData {
 
 export async function exportCashFlowExcel(data: CashFlowData) {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'BabyPOS';
+  wb.creator = 'Sumber Baby shop';
 
   const ws = wb.addWorksheet('Arus Kas');
 
@@ -196,7 +209,7 @@ export async function exportCashFlowExcel(data: CashFlowData) {
 
   for (const row of data.daily) {
     const r = ws.addRow([
-      row.date, row.transactionCount,
+      fmtDate(row.date), row.transactionCount,
       row.totalAmount / 100, row.cashAmount / 100,
       row.qrisAmount / 100, row.transferAmount / 100,
     ]);
@@ -228,7 +241,7 @@ interface BestSellersData {
 
 export async function exportBestSellersExcel(data: BestSellersData) {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'BabyPOS';
+  wb.creator = 'Sumber Baby shop';
 
   const ws = wb.addWorksheet('Best Seller');
 

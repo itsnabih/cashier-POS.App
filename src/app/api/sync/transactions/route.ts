@@ -29,7 +29,7 @@ const syncTransactionSchema = z.object({
   subtotal: z.number().int().nonnegative(),
   discount: z.number().int().nonnegative(),
   total: z.number().int().nonnegative(),
-  paymentMethod: z.enum(['cash', 'qris', 'transfer', 'bon']),
+  paymentMethod: z.enum(['cash', 'qris', 'transfer']),
   paymentAmount: z.number().int().nonnegative(),
   changeAmount: z.number().int().nonnegative(),
   notes: z.string().default(''),

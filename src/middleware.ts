@@ -14,10 +14,10 @@ import { canAccessRoute } from '@/lib/rbac';
 // ============================================================
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'babypos-default-secret-change-in-production'
+  process.env.JWT_SECRET || 'sumberbabyshop-default-secret-change-in-production'
 );
 
-const COOKIE_NAME = 'babypos-session';
+const COOKIE_NAME = 'sumberbabyshop-session';
 
 // Public routes that don't require authentication
 const PUBLIC_PATHS = ['/login', '/api/auth/login'];
@@ -63,7 +63,7 @@ export async function middleware(request: NextRequest) {
 
   // ---- 2. Enforce RBAC route rules ----
   // Determine the "app path" — strip leading slash for route matching
-  // Dashboard routes are under /(dashboard)/ group which maps to /products, /categories, etc.
+  // Dashboard routes are under /(dashboard)/ group which maps to /products, /discounts, etc.
   // POS routes are under /(pos)/ group which maps to /pos
   if (!canAccessRoute(payload.role, pathname)) {
     // API routes get 403 JSON, page routes redirect to their allowed area

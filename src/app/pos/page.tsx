@@ -14,10 +14,27 @@ import { useBarcodeScanner } from '@/hooks/useBarcodeScanner';
 import { saveTransactionLocally, syncPendingTransactions } from '@/lib/transaction-sync';
 
 export default function PosPage() {
-  const pos = usePOS();
+  const [settings, setSettings] = useState<Record<string, string>>({});
+  const pos = usePOS(settings);
   const { addToast } = useToast();
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
   const { isOnline, searchOfflineProducts } = useCatalogSync();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    // Fetch settings for discount logic
+    if (navigator.onLine) {
+      fetch('/api/settings')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.data) {
+            setSettings(data.data);
+          }
+        })
+        .catch(console.error);
+    }
+  }, []);
 
   // ---- Auto-sync pending transactions when online ----
   useEffect(() => {
@@ -87,15 +104,16 @@ export default function PosPage() {
   useBarcodeScanner({
     onScan: handleBarcodeScan,
     minLength: 4,
+    enabled: !isPaymentModalOpen,
   });
 
   // ---- Global Keyboard Shortcuts ----
   useKeyboardShortcut([
-    { options: { key: 'F1', preventDefault: true }, handler: () => pos.switchTab(0) },
-    { options: { key: 'F2', preventDefault: true }, handler: () => pos.switchTab(1) },
-    { options: { key: 'F3', preventDefault: true }, handler: () => pos.switchTab(2) },
-    { options: { key: 'F4', preventDefault: true }, handler: () => pos.switchTab(3) },
-    { options: { key: 'F5', preventDefault: true }, handler: () => pos.switchTab(4) },
+    { options: { key: 'F1', preventDefault: true, enabled: !isPaymentModalOpen }, handler: () => pos.switchTab(0) },
+    { options: { key: 'F2', preventDefault: true, enabled: !isPaymentModalOpen }, handler: () => pos.switchTab(1) },
+    { options: { key: 'F3', preventDefault: true, enabled: !isPaymentModalOpen }, handler: () => pos.switchTab(2) },
+    { options: { key: 'F4', preventDefault: true, enabled: !isPaymentModalOpen }, handler: () => pos.switchTab(3) },
+    { options: { key: 'F5', preventDefault: true, enabled: !isPaymentModalOpen }, handler: () => pos.switchTab(4) },
     {
       options: { key: 'F12', preventDefault: true },
       handler: () => {
@@ -116,9 +134,9 @@ export default function PosPage() {
         }
       },
     },
-    // Shift+Delete to clear cart
+    // Ctrl+Delete to clear cart
     {
-      options: { key: 'Delete', shiftKey: true, preventDefault: true },
+      options: { key: 'Delete', ctrlKey: true, preventDefault: true },
       handler: () => {
         if (pos.currentCart.items.length > 0 && !isPaymentModalOpen) {
           if (window.confirm('Yakin ingin mengosongkan keranjang di tab ini?')) {
@@ -130,7 +148,7 @@ export default function PosPage() {
   ]);
 
   // ---- Payment Handler (online/offline aware) ----
-  const handleProcessPayment = async (method: 'cash' | 'qris' | 'transfer' | 'bon', amount: number, notes: string) => {
+  const handleProcessPayment = async (method: 'cash' | 'qris' | 'transfer', amount: number, notes: string) => {
     const cart = pos.currentCart;
 
     const payload = {
@@ -140,8 +158,8 @@ export default function PosPage() {
         productSku: item.sku,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
-        discount: 0,
-        subtotal: item.unitPrice * item.quantity,
+        discount: item.discount * item.quantity,
+        subtotal: (item.originalPrice * item.quantity) - (item.discount * item.quantity),
       })),
       subtotal: cart.subtotal,
       discount: cart.discount,
@@ -187,6 +205,10 @@ export default function PosPage() {
     }
   };
 
+  if (!isMounted) {
+    return null; // Skip SSR to prevent hydration errors for heavily dynamic POS UI
+  }
+
   return (
     <>
       <PosLayout
@@ -202,6 +224,8 @@ export default function PosPage() {
                 onAddProduct={pos.addToCart}
                 isOnline={isOnline}
                 searchOffline={searchOfflineProducts}
+                disabled={isPaymentModalOpen}
+                settings={settings}
               />
             </div>
           </div>

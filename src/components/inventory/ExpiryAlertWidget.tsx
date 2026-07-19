@@ -41,7 +41,7 @@ export default function ExpiryAlertWidget() {
       .then((res) => {
         if (res.success) setData(res.data);
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, []);
 
@@ -109,11 +109,10 @@ export default function ExpiryAlertWidget() {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-1.5 px-3 pb-2.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
-                activeTab === tab.key
+              className={`flex items-center gap-1.5 px-3 pb-2.5 text-xs font-medium transition-colors border-b-2 -mb-px ${activeTab === tab.key
                   ? `${tab.barClass} text-slate-800`
                   : 'border-b-transparent text-slate-400 hover:text-slate-600'
-              }`}
+                }`}
             >
               <span className={`w-1.5 h-1.5 rounded-full ${tab.dotClass}`} />
               {tab.label}
@@ -128,7 +127,7 @@ export default function ExpiryAlertWidget() {
       </div>
 
       {/* Content */}
-      <div className="px-5 py-3 max-h-64 overflow-y-auto">
+      <div className="px-5 py-3 max-h-[252px] overflow-y-auto overscroll-contain">
         {activeItems.length === 0 ? (
           <p className="text-xs text-slate-400 py-4 text-center">
             Tidak ada produk di kategori ini.

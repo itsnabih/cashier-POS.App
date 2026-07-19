@@ -66,7 +66,7 @@ export default function StockOpnamePage() {
         </div>
         <Link
           href="/stock-opname/new"
-          className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-500 transition-colors"
+          className="px-4 py-2 text-sm font-medium text-white bg-baby-600 rounded-md hover:bg-baby-500 transition-colors"
         >
           Opname Baru
         </Link>
@@ -130,7 +130,7 @@ export default function StockOpnamePage() {
                       {o.status === 'in_progress' && (
                         <button
                           onClick={() => handleFinalize(o.id)}
-                          className="text-xs text-indigo-600 hover:text-indigo-500 font-medium"
+                          className="text-xs text-baby-600 hover:text-baby-500 font-medium"
                         >
                           Finalisasi
                         </button>

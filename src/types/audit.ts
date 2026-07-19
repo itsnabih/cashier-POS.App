@@ -2,12 +2,14 @@
 // Audit Log Types
 // ============================================================
 
+export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'VOID' | 'LOGIN' | 'LOGOUT';
+
 export interface AuditLog {
   id: string;
   userId: string | null;
   username: string;
   userRole: string;
-  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'VOID' | 'LOGIN' | 'LOGOUT';
+  action: AuditAction;
   entityType: string;
   entityId: string | null;
   oldValues: Record<string, unknown> | null;

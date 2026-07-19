@@ -18,6 +18,7 @@ interface Toast {
 interface ToastContextValue {
   toasts: Toast[];
   addToast: (message: string, variant?: ToastVariant) => void;
+  showToast: (message: string, variant?: ToastVariant) => void;
   removeToast: (id: string) => void;
 }
 
@@ -45,7 +46,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <ToastContext value={{ toasts, addToast, removeToast }}>
+    <ToastContext value={{ toasts, addToast, showToast: addToast, removeToast }}>
       {children}
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
     </ToastContext>
@@ -57,10 +58,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 // ============================================================
 
 const variantStyles: Record<ToastVariant, string> = {
-  success: 'border-l-emerald-500 bg-white',
+  success: 'border-l-green-500 bg-white',
   error: 'border-l-red-500 bg-white',
   warning: 'border-l-amber-500 bg-white',
-  info: 'border-l-blue-500 bg-white',
+  info: 'border-l-baby-500 bg-white',
 };
 
 const variantIcons: Record<ToastVariant, string> = {
@@ -88,14 +89,14 @@ function ToastContainer({
           role="alert"
         >
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-0.5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-0.5">
               {variantIcons[toast.variant]}
             </p>
-            <p className="text-sm text-slate-800 leading-snug">{toast.message}</p>
+            <p className="text-sm text-gray-800 leading-snug">{toast.message}</p>
           </div>
           <button
             onClick={() => onDismiss(toast.id)}
-            className="text-slate-400 hover:text-slate-600 text-lg leading-none mt-0.5 flex-shrink-0"
+            className="text-gray-400 hover:text-gray-600 text-lg leading-none mt-0.5 flex-shrink-0"
             aria-label="Tutup notifikasi"
           >
             &times;

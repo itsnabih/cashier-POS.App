@@ -203,7 +203,7 @@ export default function StockOpnameTable() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Cari produk atau SKU..."
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md bg-slate-50 focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors text-slate-900"
+              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md bg-gray-50 focus:bg-white focus:border-baby-500 focus:ring-1 focus:ring-baby-500 outline-none transition-colors text-gray-900"
             />
           </div>
 
@@ -234,7 +234,7 @@ export default function StockOpnameTable() {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Catatan opname..."
-            className="w-48 px-3 py-2 text-sm border border-slate-200 rounded-md bg-slate-50 focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors text-slate-900"
+            className="w-48 px-3 py-2 text-sm border border-gray-200 rounded-md bg-gray-50 focus:bg-white focus:border-baby-500 focus:ring-1 focus:ring-baby-500 outline-none transition-colors text-gray-900"
           />
         </div>
       </div>
@@ -311,7 +311,7 @@ export default function StockOpnameTable() {
                         type="number"
                         value={row.physicalStock}
                         onChange={(e) => updatePhysicalStock(row.productId, e.target.value)}
-                        className="w-full px-2 py-1.5 text-sm text-right border border-slate-200 rounded bg-white focus:border-indigo-500 outline-none tabular-nums text-slate-900"
+                        className="w-full px-2 py-1.5 text-sm text-right border border-gray-200 rounded bg-white focus:border-baby-500 outline-none tabular-nums text-gray-900"
                         min={0}
                         placeholder="-"
                       />
@@ -351,7 +351,7 @@ export default function StockOpnameTable() {
                           className={`w-full px-2 py-1.5 text-xs border rounded bg-white outline-none transition-colors text-slate-900 ${
                             !row.reason.trim()
                               ? 'border-red-300 focus:border-red-500'
-                              : 'border-slate-200 focus:border-indigo-500'
+                              : 'border-gray-200 focus:border-baby-500'
                           }`}
                           placeholder="Wajib diisi"
                         />
@@ -384,7 +384,7 @@ export default function StockOpnameTable() {
             type="button"
             onClick={handleSubmit}
             disabled={submitting || filledCount === 0}
-            className="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-5 py-2 text-sm font-medium text-white bg-baby-600 rounded-md hover:bg-baby-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {submitting ? 'Memproses...' : 'Simpan Opname'}
           </button>

@@ -103,19 +103,18 @@ export function useCatalogSync() {
   }, [isOnline, syncCatalog]);
 
   // ---- Search products from IndexedDB (for offline use) ----
-  const searchOfflineProducts = useCallback(async (query: string): Promise<ProductCashierView[]> => {
+  const searchOfflineProducts = useCallback(async (query: string, categoryId?: string): Promise<ProductCashierView[]> => {
     let results: OfflineProduct[];
 
     if (!query || query.trim() === '') {
       results = await offlineDb.products
         .where('isActive')
         .equals(1 as any) // Dexie stores booleans as 0/1
-        .limit(20)
         .toArray();
 
       // Fallback: if indexed boolean query fails, get all and filter
       if (results.length === 0) {
-        results = await offlineDb.products.limit(20).toArray();
+        results = await offlineDb.products.toArray();
         results = results.filter(p => p.isActive);
       }
     } else {
@@ -128,9 +127,15 @@ export function useCatalogSync() {
           (p.name.toLowerCase().includes(q) ||
            (p.sku && p.sku.toLowerCase().includes(q)) ||
            (p.barcode && p.barcode.includes(q)))
-        )
-        .slice(0, 20);
+        );
     }
+
+    if (categoryId) {
+      results = results.filter(p => p.categoryId === categoryId);
+    }
+
+    // Limit to 20 after all filters
+    results = results.slice(0, 20);
 
     // Map to ProductCashierView
     return results.map(p => ({

@@ -1,0 +1,220 @@
+/* ============================================================
+   Login Page Styles — ROLLER style adaptation
+   ============================================================ */
+
+.login-page-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  height: 100dvh;
+  background-color: #ffffff;
+  /* White background */
+  padding: 1rem;
+  overflow: hidden;
+  font-family: var(--font-sans);
+}
+
+.login-card {
+  display: flex;
+  width: 100%;
+  max-width: 900px;
+  height: 600px;
+  max-height: 90vh;
+  background-color: #fff0ff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* ---------- Left Panel ---------- */
+.login-left {
+  display: none;
+  width: 40%;
+  background-color: #FA9ABF;
+  /* Pink from palette */
+  padding: 2.5rem;
+  flex-direction: column;
+  position: relative;
+}
+
+@media (min-width: 768px) {
+  .login-left {
+    display: flex;
+  }
+}
+
+.login-brand-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.login-brand-name {
+  color: white;
+  font-weight: 700;
+  font-size: 1.125rem;
+  letter-spacing: 0.05em;
+}
+
+.login-left-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-pos-icon-wrapper {
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-pos-title {
+  color: white;
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ---------- Right Panel (White/Light) ---------- */
+.login-right {
+  flex: 1;
+  position: relative;
+  background-color: #ffebfd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* SVG Wave Background */
+.login-wave-bg {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 100%;
+  height: 60%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 1440 320' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23FAF0C4' d='M0,256L48,250.7C96,245,192,235,288,213.3C384,192,480,160,576,149.3C672,139,768,149,864,170.7C960,192,1056,224,1152,240C1248,256,1344,256,1392,256L1440,256L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'/%3E%3C/svg%3E");
+  background-size: cover;
+  background-position: bottom right;
+  background-repeat: no-repeat;
+  z-index: 0;
+}
+
+.login-right-content {
+  width: 100%;
+  max-width: 320px;
+  position: relative;
+  z-index: 1;
+}
+
+.login-subtitle {
+  color: #4BA7F8;
+  /* Blue from palette */
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 0.5rem 0;
+}
+
+.login-title {
+  color: #1A2238;
+  /* Navy text */
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 2.5rem 0;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.login-field input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background-color: white;
+  border: 1px solid #E0E4EC;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #1A2238;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.login-field input::placeholder {
+  color: #9BA4B5;
+}
+
+.login-field input:focus {
+  border-color: #85D3FB;
+  /* Light blue from palette */
+  box-shadow: 0 0 0 3px rgba(133, 211, 251, 0.2);
+}
+
+.login-forgot {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.login-forgot a {
+  color: #4BA7F8;
+  /* Blue */
+  text-decoration: none;
+}
+
+.login-forgot a:hover {
+  text-decoration: underline;
+}
+
+.login-submit {
+  width: 100%;
+  padding: 0.875rem;
+  background-color: #4BA7F8;
+  /* Blue button */
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-submit:hover:not(:disabled) {
+  background-color: #3B92DF;
+}
+
+.login-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Alerts */
+.login-alert {
+  padding: 0.75rem;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  margin-bottom: 1.5rem;
+  background-color: #FFF3CD;
+  color: #8B6914;
+  border: 1px solid #FFE082;
+}
+
+.login-alert.error {
+  background-color: #FDE8EF;
+  color: #A30030;
+  border: 1px solid #F5B0C8;
+}

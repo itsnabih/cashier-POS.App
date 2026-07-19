@@ -31,15 +31,13 @@ export function NetworkStatus({ isOnline }: NetworkStatusProps) {
       {/* Online/Offline indicator */}
       <div className="flex items-center gap-1.5">
         <div
-          className={`w-2 h-2 rounded-full ${
-            isOnline
+          className={`w-2 h-2 rounded-full ${isOnline
               ? 'bg-emerald-400'
               : 'bg-red-400 animate-pulse'
-          }`}
+            }`}
         />
-        <span className={`text-[10px] font-medium ${
-          isOnline ? 'text-emerald-300' : 'text-red-300'
-        }`}>
+        <span className={`text-[10px] font-medium ${isOnline ? 'text-emerald-300' : 'text-red-300'
+          }`}>
           {isOnline ? 'Online' : 'Offline'}
         </span>
       </div>

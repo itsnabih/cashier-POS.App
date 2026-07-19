@@ -225,7 +225,7 @@ export default function ItemForm({ productId, initialData }: ItemFormProps) {
                 <button
                   type="button"
                   onClick={handleAutoSKU}
-                  className="px-3 py-2 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100 transition-colors whitespace-nowrap"
+                  className="px-3 py-2 text-xs font-medium text-baby-600 bg-baby-50 border border-baby-200 rounded-md hover:bg-baby-100 transition-colors whitespace-nowrap"
                 >
                   Auto
                 </button>
@@ -258,7 +258,7 @@ export default function ItemForm({ productId, initialData }: ItemFormProps) {
 
       {/* === Harga & Stok === */}
       <section className="card p-5">
-        <h2 className="text-sm font-semibold text-slate-800 mb-4">Harga &amp; Stok</h2>
+        <h2 className="text-sm font-semibold text-gray-800 mb-4">Harga &amp; Stok</h2>
         <div className="grid grid-cols-2 gap-4">
 
           {canSeeBuyPrice && (
@@ -329,7 +329,7 @@ export default function ItemForm({ productId, initialData }: ItemFormProps) {
         {canSeeBuyPrice && buyPrice > 0 && sellPrice > 0 && (
           <div className="mt-4 pt-4 border-t border-slate-100">
             <div className="flex items-center gap-4 text-xs">
-              <span className="text-slate-500">Margin:</span>
+              <span className="text-gray-500">Margin:</span>
               <span className={`font-semibold ${margin > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                 Rp {margin.toLocaleString('id-ID')} ({marginPct}%)
               </span>
@@ -343,14 +343,14 @@ export default function ItemForm({ productId, initialData }: ItemFormProps) {
         <button
           type="button"
           onClick={() => router.push('/products')}
-          className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors"
+          className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
         >
           Batal
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-5 py-2 text-sm font-medium text-white bg-baby-600 rounded-md hover:bg-baby-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isSubmitting ? 'Menyimpan...' : isEditing ? 'Perbarui Produk' : 'Simpan Produk'}
         </button>
@@ -370,7 +370,7 @@ function Field({
 }) {
   return (
     <div>
-      <label htmlFor={htmlFor} className="block text-xs font-medium text-slate-600 mb-1.5">
+      <label htmlFor={htmlFor} className="block text-xs font-medium text-gray-600 mb-1.5">
         {label}{required && <span className="text-red-400 ml-0.5">*</span>}
       </label>
       {children}
@@ -380,8 +380,8 @@ function Field({
 }
 
 function inputCls(error?: object): string {
-  const base = 'w-full px-3 py-2 text-sm border rounded-md bg-slate-50 focus:bg-white outline-none transition-colors text-slate-900';
+  const base = 'w-full px-3 py-2 text-sm border rounded-md bg-gray-50 focus:bg-white outline-none transition-colors text-gray-900';
   return error
     ? `${base} border-red-300 focus:border-red-500 focus:ring-1 focus:ring-red-500`
-    : `${base} border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500`;
+    : `${base} border-gray-200 focus:border-baby-500 focus:ring-1 focus:ring-baby-500`;
 }

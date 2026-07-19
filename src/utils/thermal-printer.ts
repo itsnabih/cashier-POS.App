@@ -238,9 +238,9 @@ export function buildReceiptBytes(receipt: ReceiptData): Uint8Array {
   // Receipt info
   builder
     .alignLeft()
-    .leftRight('No:', receipt.receiptNumber, W)
-    .leftRight('Tgl:', receipt.date, W)
-    .leftRight('Kasir:', receipt.cashierName, W)
+    .leftRight('No.struk', receipt.receiptNumber, W)
+    .leftRight('Oleh', receipt.cashierName, W)
+    .leftRight('Tanggal & jam', receipt.date, W)
     .separator('-', W);
 
   // Items
@@ -259,21 +259,21 @@ export function buildReceiptBytes(receipt: ReceiptData): Uint8Array {
 
   // Totals
   builder
-    .leftRight('Subtotal', fmtRp(receipt.subtotal), W);
+    .leftRight('Sub total', fmtRp(receipt.subtotal), W);
 
   if (receipt.discount > 0) {
-    builder.leftRight('Diskon', '-' + fmtRp(receipt.discount), W);
+    builder.leftRight('Total diskon', '-' + fmtRp(receipt.discount), W);
   }
 
   builder
     .boldOn()
-    .leftRight('TOTAL', fmtRp(receipt.total), W)
+    .leftRight('Total nett', fmtRp(receipt.total), W)
     .boldOff()
     .separator('-', W)
-    .leftRight('Bayar (' + receipt.paymentMethod + ')', fmtRp(receipt.paymentAmount), W);
+    .leftRight('Tunai', fmtRp(receipt.paymentAmount), W);
 
   if (receipt.changeAmount > 0) {
-    builder.leftRight('Kembali', fmtRp(receipt.changeAmount), W);
+    builder.leftRight('Kembalian', fmtRp(receipt.changeAmount), W);
   }
 
   // Footer
@@ -281,9 +281,9 @@ export function buildReceiptBytes(receipt: ReceiptData): Uint8Array {
     .newline()
     .separator('=', W)
     .alignCenter()
-    .text('Terima Kasih')
+    .text('TERIMA KASIH')
     .newline()
-    .text('Selamat Berbelanja!')
+    .text('SELAMAT BELANJA KEMBALI')
     .newline()
     .cut();
 
@@ -349,9 +349,9 @@ export function printReceiptBrowser(receipt: ReceiptData): void {
   <div class="center">${receipt.storeAddress}</div>
   <div class="center">${receipt.storePhone}</div>
   <div class="sep-double"></div>
-  <div class="row"><span>No:</span><span>${receipt.receiptNumber}</span></div>
-  <div class="row"><span>Tgl:</span><span>${receipt.date}</span></div>
-  <div class="row"><span>Kasir:</span><span>${receipt.cashierName}</span></div>
+  <div class="row"><span>No.struk</span><span>${receipt.receiptNumber}</span></div>
+  <div class="row"><span>Oleh</span><span>${receipt.cashierName}</span></div>
+  <div class="row"><span>Tanggal & jam</span><span>${receipt.date}</span></div>
   <div class="sep"></div>
   ${receipt.items.map(item => `
     <div class="item-name">${item.name}</div>
@@ -361,15 +361,15 @@ export function printReceiptBrowser(receipt: ReceiptData): void {
     </div>
   `).join('')}
   <div class="sep"></div>
-  <div class="row"><span>Subtotal</span><span>${fmtRp(receipt.subtotal)}</span></div>
-  ${receipt.discount > 0 ? `<div class="row"><span>Diskon</span><span>-${fmtRp(receipt.discount)}</span></div>` : ''}
-  <div class="row bold"><span>TOTAL</span><span>${fmtRp(receipt.total)}</span></div>
+  <div class="row"><span>Sub total</span><span>${fmtRp(receipt.subtotal)}</span></div>
+  ${receipt.discount > 0 ? `<div class="row"><span>Total diskon</span><span>-${fmtRp(receipt.discount)}</span></div>` : ''}
+  <div class="row bold"><span>Total nett</span><span>${fmtRp(receipt.total)}</span></div>
   <div class="sep"></div>
-  <div class="row"><span>Bayar (${receipt.paymentMethod})</span><span>${fmtRp(receipt.paymentAmount)}</span></div>
-  ${receipt.changeAmount > 0 ? `<div class="row"><span>Kembali</span><span>${fmtRp(receipt.changeAmount)}</span></div>` : ''}
+  <div class="row"><span>Tunai</span><span>${fmtRp(receipt.paymentAmount)}</span></div>
+  ${receipt.changeAmount > 0 ? `<div class="row"><span>Kembalian</span><span>${fmtRp(receipt.changeAmount)}</span></div>` : ''}
   <div class="sep-double mt"></div>
-  <div class="center mt">Terima Kasih</div>
-  <div class="center">Selamat Berbelanja!</div>
+  <div class="center mt">TERIMA KASIH</div>
+  <div class="center">SELAMAT BELANJA KEMBALI</div>
   <script>window.onload = () => { window.print(); window.onafterprint = () => window.close(); }</script>
 </body>
 </html>`;

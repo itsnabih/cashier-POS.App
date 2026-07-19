@@ -5,12 +5,17 @@
 export interface PurchaseOrder {
   id: string;
   poNumber: string;
-  supplierId: string | null;
-  supplierName?: string;
+
   receivedBy: string | null;
   receivedByName?: string;
   status: 'draft' | 'received' | 'cancelled';
-  totalAmount: number;
+  source: string | null;
+  referenceNumber: string | null;
+  discountType: 'percentage' | 'fixed' | null;
+  discountValue: number;
+  taxType: 'percentage' | 'fixed' | null;
+  taxValue: number;
+  grandTotal: number;
   notes: string | null;
   receivedAt: string | null;
   createdAt: string;
@@ -26,18 +31,24 @@ export interface PurchaseOrderItem {
   quantity: number;
   unitCost: number;
   subtotal: number;
+  netUnitCost: number;
   expiredDate: string | null;
 }
 
 export interface PurchaseOrderRow {
   id: string;
   po_number: string;
-  supplier_id: string | null;
-  supplier_name?: string;
+
   received_by: string | null;
   received_by_name?: string;
   status: 'draft' | 'received' | 'cancelled';
-  total_amount: string;
+  source: string | null;
+  reference_number: string | null;
+  discount_type: 'percentage' | 'fixed' | null;
+  discount_value: string | null;
+  tax_type: 'percentage' | 'fixed' | null;
+  tax_value: string | null;
+  grand_total: string | null;
   notes: string | null;
   received_at: string | null;
   created_at: string;
@@ -52,6 +63,7 @@ export interface PurchaseOrderItemRow {
   quantity: number;
   unit_cost: string;
   subtotal: string;
+  net_unit_cost: string | null;
   expired_date: string | null;
 }
 
@@ -59,12 +71,18 @@ export function mapPurchaseOrderRow(row: PurchaseOrderRow): PurchaseOrder {
   return {
     id: row.id,
     poNumber: row.po_number,
-    supplierId: row.supplier_id,
-    supplierName: row.supplier_name,
+
     receivedBy: row.received_by,
     receivedByName: row.received_by_name,
     status: row.status,
     totalAmount: Number(row.total_amount),
+    source: row.source,
+    referenceNumber: row.reference_number,
+    discountType: row.discount_type,
+    discountValue: Number(row.discount_value || 0),
+    taxType: row.tax_type,
+    taxValue: Number(row.tax_value || 0),
+    grandTotal: Number(row.grand_total || row.total_amount),
     notes: row.notes,
     receivedAt: row.received_at,
     createdAt: row.created_at,
@@ -81,6 +99,7 @@ export function mapPurchaseOrderItemRow(row: PurchaseOrderItemRow): PurchaseOrde
     quantity: row.quantity,
     unitCost: Number(row.unit_cost),
     subtotal: Number(row.subtotal),
+    netUnitCost: Number(row.net_unit_cost || row.unit_cost),
     expiredDate: row.expired_date,
   };
 }

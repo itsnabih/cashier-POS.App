@@ -41,7 +41,7 @@ export interface PendingTransaction {
   subtotal: number;
   discount: number;
   total: number;
-  paymentMethod: 'cash' | 'qris' | 'transfer' | 'bon';
+  paymentMethod: 'cash' | 'qris' | 'transfer';
   paymentAmount: number;
   changeAmount: number;
   notes: string;
@@ -60,13 +60,13 @@ export interface SyncMeta {
 
 // ---- Dexie Instance ----
 
-class BabyPosDB extends Dexie {
+class SumberBabyshopDB extends Dexie {
   products!: EntityTable<OfflineProduct, 'id'>;
   pendingTransactions!: EntityTable<PendingTransaction, 'localId'>;
   syncMeta!: EntityTable<SyncMeta, 'key'>;
 
   constructor() {
-    super('babypos-offline');
+    super('sumberbabyshop-offline');
 
     this.version(1).stores({
       // Indexed fields only (Dexie stores all fields automatically)
@@ -78,7 +78,7 @@ class BabyPosDB extends Dexie {
 }
 
 // Singleton instance
-export const offlineDb = new BabyPosDB();
+export const offlineDb = new SumberBabyshopDB();
 
 // ---- Helper Functions ----
 
