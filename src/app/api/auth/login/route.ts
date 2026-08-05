@@ -15,13 +15,13 @@ import type { UserRow } from '@/types/user';
 const LoginSchema = z.object({
   username: z
     .string()
-    .min(1, 'Username wajib diisi')
-    .max(50, 'Username maksimal 50 karakter')
+    .min(1, 'User ID wajib diisi')
+    .max(50, 'User ID maksimal 50 karakter')
     .transform(sanitizeString),
-  password: z
+  pin: z
     .string()
-    .min(1, 'Password wajib diisi')
-    .max(100, 'Password terlalu panjang'),
+    .length(6, 'PIN harus 6 digit')
+    .regex(/^\d{6}$/, 'PIN harus berupa 6 digit angka'),
 });
 
 export async function POST(request: NextRequest) {
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       return apiBadRequest('Input tidak valid', parsed.error.flatten().fieldErrors);
     }
 
-    const { username, password } = parsed.data;
+    const { username, pin } = parsed.data;
 
     // 2. Find user by username (parameterized query)
     const user = await queryOne<UserRow>(
@@ -43,13 +43,13 @@ export async function POST(request: NextRequest) {
     );
 
     if (!user) {
-      return apiUnauthorized('Username atau password salah');
+      return apiUnauthorized('User ID atau PIN salah');
     }
 
-    // 3. Verify password
-    const isValid = await verifyPassword(password, user.password_hash);
+    // 3. Verify PIN (stored as bcrypt hash in password_hash column)
+    const isValid = await verifyPassword(pin, user.password_hash);
     if (!isValid) {
-      return apiUnauthorized('Username atau password salah');
+      return apiUnauthorized('User ID atau PIN salah');
     }
 
     // 4. Create JWT token

@@ -61,7 +61,7 @@ export default function ReceiveGoodsForm() {
     handleSubmit,
     setValue,
     formState: { errors, isSubmitting },
-  } = useForm<ReceiveFormValues, unknown, ReceiveFormValues>({
+  } = useForm<z.input<typeof ReceiveFormSchema>, any, ReceiveFormValues>({
     resolver: zodResolver(ReceiveFormSchema),
     defaultValues: {
       source: '',

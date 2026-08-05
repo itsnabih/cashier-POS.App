@@ -2,9 +2,9 @@
 // Role-Based Access Control (RBAC)
 // Roles: owner, admin, kasir
 //
-// Owner  → Akses penuh tanpa batas
-// Admin  → Terbatas pada inventaris (produk, kategori, stok)
-// Kasir  → Hanya layar POS, TIDAK bisa lihat harga modal
+// Owner  → Akses penuh tanpa batas (all access)
+// Admin  → Semua akses KECUALI: buat/edit user & edit laporan keuangan
+// Kasir  → Hanya POS (only access POS)
 // ============================================================
 
 export const ROLES = {
@@ -95,7 +95,7 @@ const ADMIN_PERMISSIONS: Permission[] = [
   PERMISSIONS.PRODUCT_CREATE,
   PERMISSIONS.PRODUCT_EDIT,
   PERMISSIONS.PRODUCT_DELETE,
-  // Admin TIDAK bisa lihat harga modal
+  PERMISSIONS.PRODUCT_VIEW_BUY_PRICE, // admin bisa lihat harga modal
   PERMISSIONS.CATEGORY_VIEW,
   PERMISSIONS.CATEGORY_CREATE,
   PERMISSIONS.CATEGORY_EDIT,
@@ -109,17 +109,23 @@ const ADMIN_PERMISSIONS: Permission[] = [
   PERMISSIONS.STOCK_OPNAME_CREATE,
   PERMISSIONS.STOCK_OPNAME_FINALIZE,
   PERMISSIONS.INVENTORY_ADJUST,
-  // Transactions (view only, bisa void)
+  // Transactions (view all, export — TIDAK bisa void)
   PERMISSIONS.TRANSACTION_VIEW,
   PERMISSIONS.TRANSACTION_VIEW_ALL,
-  PERMISSIONS.TRANSACTION_VOID,
   PERMISSIONS.TRANSACTION_EXPORT,
-  // Reports (tanpa profit — karena butuh harga modal)
+  PERMISSIONS.TRANSACTION_CREATE,
+  // Reports (view & export — TIDAK bisa edit/profit)
   PERMISSIONS.REPORT_VIEW,
   PERMISSIONS.REPORT_EXPORT,
   // POS access
   PERMISSIONS.POS_ACCESS,
-  PERMISSIONS.TRANSACTION_CREATE,
+  // Settings (view & edit — tapi BUKAN user management)
+  PERMISSIONS.SETTINGS_VIEW,
+  PERMISSIONS.SETTINGS_EDIT,
+  // Audit logs (bisa melihat)
+  PERMISSIONS.AUDIT_VIEW,
+  // Admin TIDAK punya: USER_CREATE, USER_EDIT, USER_DELETE, USER_VIEW
+  // Admin TIDAK punya: TRANSACTION_VOID, REPORT_PROFIT
 ];
 
 const KASIR_PERMISSIONS: Permission[] = [

@@ -3,12 +3,12 @@
 -- Default users for initial setup
 --
 -- IMPORTANT: Run this AFTER 001_init.sql
--- Default passwords (change after first login!):
---   owner  → owner123
---   admin  → admin123
---   kasir  → kasir123
+-- Default PIN (ganti setelah login pertama!):
+--   owner  → PIN: 123456
+--   admin  → PIN: 123456
+--   kasir  → PIN: 123456
 --
--- Password hashes generated with bcrypt (10 rounds)
+-- PIN hashes generated with bcrypt (10 rounds)
 -- ============================================================
 
 -- Owner (akses penuh)

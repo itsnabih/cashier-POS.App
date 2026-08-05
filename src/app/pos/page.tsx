@@ -6,20 +6,24 @@ import { TabNavigation } from '@/components/pos/TabNavigation';
 import { ProductSearch } from '@/components/pos/ProductSearch';
 import { CartPanel } from '@/components/pos/CartPanel';
 import { PaymentModal } from '@/components/pos/PaymentModal';
+import { ReceiptModal, type CompletedTransaction } from '@/components/pos/ReceiptModal';
 import { usePOS } from '@/hooks/usePOS';
 import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut';
 import { useToast } from '@/hooks/useToast';
 import { useCatalogSync } from '@/hooks/useCatalogSync';
 import { useBarcodeScanner } from '@/hooks/useBarcodeScanner';
 import { saveTransactionLocally, syncPendingTransactions } from '@/lib/transaction-sync';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function PosPage() {
   const [settings, setSettings] = useState<Record<string, string>>({});
   const pos = usePOS(settings);
   const { addToast } = useToast();
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [completedTx, setCompletedTx] = useState<CompletedTransaction | null>(null);
   const { isOnline, searchOfflineProducts } = useCatalogSync();
   const [isMounted, setIsMounted] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     setIsMounted(true);
@@ -171,6 +175,7 @@ export default function PosPage() {
     };
 
     try {
+      let receiptNo = '';
       if (navigator.onLine) {
         // Try to save directly to server
         const res = await fetch('/api/sync/transactions', {
@@ -183,26 +188,49 @@ export default function PosPage() {
           throw new Error('Server error');
         }
 
+        const data = await res.json();
+        receiptNo = data.data?.receiptNumber || `TRX-${Date.now()}`;
         addToast('Transaksi berhasil disimpan!', 'success');
       } else {
         // Save locally for later sync
-        const receiptNo = await saveTransactionLocally(payload);
+        receiptNo = await saveTransactionLocally(payload);
         addToast(`Transaksi tersimpan offline (${receiptNo}). Akan sinkron saat online.`, 'info');
       }
 
+      setCompletedTx({
+        receiptNumber: receiptNo,
+        timestamp: new Date(),
+        cart: cart,
+        paymentMethod: method,
+        paymentAmount: amount,
+        changeAmount: Math.max(0, amount - cart.total),
+        cashierName: user?.fullName || 'Unknown',
+      });
       setPaymentModalOpen(false);
-      pos.clearCurrentTab();
     } catch {
       // Network failed — fallback to offline
       try {
         const receiptNo = await saveTransactionLocally(payload);
         addToast(`Koneksi gagal. Transaksi tersimpan offline (${receiptNo}).`, 'info');
+        setCompletedTx({
+          receiptNumber: receiptNo,
+          timestamp: new Date(),
+          cart: cart,
+          paymentMethod: method,
+          paymentAmount: amount,
+          changeAmount: Math.max(0, amount - cart.total),
+          cashierName: user?.fullName || 'Unknown',
+        });
         setPaymentModalOpen(false);
-        pos.clearCurrentTab();
       } catch (err: any) {
         addToast(err.message || 'Gagal memproses transaksi', 'error');
       }
     }
+  };
+
+  const handleCloseReceipt = () => {
+    setCompletedTx(null);
+    pos.clearCurrentTab();
   };
 
   if (!isMounted) {
@@ -247,6 +275,15 @@ export default function PosPage() {
           onClose={() => setPaymentModalOpen(false)}
           cart={pos.currentCart}
           onProcessPayment={handleProcessPayment}
+        />
+      )}
+
+      {completedTx && (
+        <ReceiptModal
+          isOpen={!!completedTx}
+          onClose={handleCloseReceipt}
+          transaction={completedTx}
+          storeName={settings?.storeName || 'BabyPOS'}
         />
       )}
     </>

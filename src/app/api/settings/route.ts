@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     if (!user) return apiUnauthorized();
 
     const rows = await query<{ key: string; value: any; description: string }>('SELECT key, value, description FROM app_settings');
-    
+
     // Convert to a dictionary for easier consumption
     const settings: Record<string, any> = {};
     for (const row of rows) {
@@ -29,10 +29,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// ============================================================
-// PUT /api/settings
-// Update multiple application settings
-// ============================================================
 export async function PUT(request: NextRequest) {
   try {
     const user = await getCurrentUser();
@@ -47,7 +43,7 @@ export async function PUT(request: NextRequest) {
 
     // Process each setting
     const entries = Object.entries(body);
-    
+
     for (const [key, value] of entries) {
       // Upsert the setting
       await queryOne(

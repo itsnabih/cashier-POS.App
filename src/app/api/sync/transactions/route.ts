@@ -120,22 +120,22 @@ export async function POST(request: NextRequest) {
       await client.query('COMMIT');
 
       // 4. Audit log
-      await auditLog({
-        userId: user.userId,
-        username: user.username,
-        role: user.role,
-        action: 'CREATE',
-        entity: 'transaction',
-        entityId: transactionId,
-        newValues: {
-          receiptNumber: data.receiptNumber,
-          total: data.total,
-          paymentMethod: data.paymentMethod,
-          syncedFrom: 'offline-pwa',
-          itemCount: data.items.length,
-        },
-        request,
-      });
+      await auditLog(
+        user,
+        'CREATE',
+        'transaction',
+        transactionId,
+        {
+          newValues: {
+            receiptNumber: data.receiptNumber,
+            total: data.total,
+            paymentMethod: data.paymentMethod,
+            syncedFrom: 'offline-pwa',
+            itemCount: data.items.length,
+          },
+          request,
+        }
+      );
 
       return apiSuccess({
         id: transactionId,

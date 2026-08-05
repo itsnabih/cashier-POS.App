@@ -18,10 +18,9 @@ const REASON_MESSAGES: Record<string, string> = {
 
 function LoginForm() {
   const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const reason = searchParams.get('reason');
@@ -37,7 +36,7 @@ function LoginForm() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, pin }),
       });
       const data = await res.json();
 
@@ -59,6 +58,12 @@ function LoginForm() {
       setLoading(false);
     }
   }
+
+  const handlePinChange = (value: string) => {
+    // Only allow digits, max 6
+    const digits = value.replace(/\D/g, '').slice(0, 6);
+    setPin(digits);
+  };
 
   return (
     <div className="login-page-container">
@@ -91,7 +96,7 @@ function LoginForm() {
             </div>
 
             <p className="login-subtitle">POINT OF SALE</p>
-            <h2 className="login-title">Sign in</h2>
+            <h2 className="login-title">Masuk</h2>
 
             {reasonMessage && (
               <div className="login-alert">
@@ -112,7 +117,7 @@ function LoginForm() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Username"
+                  placeholder="User ID"
                   autoFocus
                   required
                   autoComplete="username"
@@ -121,26 +126,26 @@ function LoginForm() {
 
               <div className="login-field">
                 <input
-                  id="login-password"
+                  id="login-pin"
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={pin}
+                  onChange={(e) => handlePinChange(e.target.value)}
+                  placeholder="PIN (6 digit)"
                   required
                   autoComplete="current-password"
+                  pattern="\d{6}"
+                  title="PIN harus 6 digit angka"
                 />
-              </div>
-
-              <div className="login-forgot">
-                <a href="#">Forgotten your password?</a>
               </div>
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || pin.length !== 6}
                 className="login-submit"
               >
-                {loading ? 'Processing...' : 'Masuk'}
+                {loading ? 'Memproses...' : 'Masuk'}
               </button>
             </form>
           </div>
