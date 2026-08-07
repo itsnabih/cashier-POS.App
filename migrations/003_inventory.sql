@@ -1,30 +1,20 @@
--- ============================================================
--- BabyPOS Migration 003: Inventory Module
--- Adds: expired_date to products, suppliers, purchase_orders,
---       stock_opnames, inventory_adjustments
--- ============================================================
-
--- ============================================================
--- 1. ADD expired_date TO PRODUCTS
--- ============================================================
+-- Products (expired date)
 ALTER TABLE products ADD COLUMN IF NOT EXISTS expired_date DATE;
 
 CREATE INDEX IF NOT EXISTS idx_products_expired ON products(expired_date)
   WHERE expired_date IS NOT NULL;
 
--- ============================================================
--- 2. SUPPLIERS
--- ============================================================
+-- Suppliers
 CREATE TABLE IF NOT EXISTS suppliers (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name        VARCHAR(200) NOT NULL,
-  phone       VARCHAR(30),
-  address     TEXT,
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name           VARCHAR(200) NOT NULL,
+  phone          VARCHAR(30),
+  address        TEXT,
   contact_person VARCHAR(100),
-  notes       TEXT,
-  is_active   BOOLEAN NOT NULL DEFAULT true,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  notes          TEXT,
+  is_active      BOOLEAN NOT NULL DEFAULT true,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_suppliers_name ON suppliers(name);
@@ -35,10 +25,7 @@ CREATE TRIGGER trg_suppliers_updated_at
   BEFORE UPDATE ON suppliers
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- ============================================================
--- 3. PURCHASE ORDERS (Penerimaan Barang)
--- status: draft → received → cancelled
--- ============================================================
+-- Purchase Orders
 CREATE TABLE IF NOT EXISTS purchase_orders (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   po_number       VARCHAR(30) UNIQUE NOT NULL,
@@ -62,10 +49,7 @@ CREATE TRIGGER trg_purchase_orders_updated_at
   BEFORE UPDATE ON purchase_orders
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- ============================================================
--- 4. PURCHASE ORDER ITEMS
--- Stores qty received and unit cost for MAC calculation
--- ============================================================
+-- Purchase Order Items
 CREATE TABLE IF NOT EXISTS purchase_order_items (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   po_id           UUID NOT NULL REFERENCES purchase_orders(id) ON DELETE CASCADE,
@@ -81,10 +65,7 @@ CREATE TABLE IF NOT EXISTS purchase_order_items (
 CREATE INDEX IF NOT EXISTS idx_po_items_po ON purchase_order_items(po_id);
 CREATE INDEX IF NOT EXISTS idx_po_items_product ON purchase_order_items(product_id);
 
--- ============================================================
--- 5. STOCK OPNAME (Stok Opname Header)
--- status: in_progress → finalized → cancelled
--- ============================================================
+-- Stock Opnames
 CREATE TABLE IF NOT EXISTS stock_opnames (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   opname_number   VARCHAR(30) UNIQUE NOT NULL,
@@ -107,10 +88,7 @@ CREATE TRIGGER trg_stock_opnames_updated_at
   BEFORE UPDATE ON stock_opnames
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- ============================================================
--- 6. STOCK OPNAME ITEMS (Per-product comparison)
--- system_stock vs physical_stock → difference
--- ============================================================
+-- Stock Opname Items
 CREATE TABLE IF NOT EXISTS stock_opname_items (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   opname_id       UUID NOT NULL REFERENCES stock_opnames(id) ON DELETE CASCADE,
@@ -128,11 +106,7 @@ CREATE TABLE IF NOT EXISTS stock_opname_items (
 CREATE INDEX IF NOT EXISTS idx_opname_items_opname ON stock_opname_items(opname_id);
 CREATE INDEX IF NOT EXISTS idx_opname_items_product ON stock_opname_items(product_id);
 
--- ============================================================
--- 7. INVENTORY ADJUSTMENTS
--- Records all stock adjustments (shrinkage, corrections)
--- Linked to stock opname or manual adjustment
--- ============================================================
+-- Inventory Adjustments
 CREATE TABLE IF NOT EXISTS inventory_adjustments (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   product_id      UUID NOT NULL REFERENCES products(id),

@@ -1,16 +1,6 @@
--- ============================================================
--- BabyPOS Database Schema v1.0
--- PostgreSQL 15+
--- Harga disimpan dalam BIGINT (satuan sen): Rp 15.000 = 1500000
--- ============================================================
-
--- Extension for UUID generation
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- ============================================================
--- 1. USERS & RBAC
--- Roles: owner (akses penuh), admin (inventaris), kasir (POS only)
--- ============================================================
+-- Users
 CREATE TABLE IF NOT EXISTS users (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   username      VARCHAR(50) UNIQUE NOT NULL,
@@ -28,9 +18,7 @@ CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 CREATE INDEX IF NOT EXISTS idx_users_active ON users(is_active) WHERE is_active = true;
 
--- ============================================================
--- 2. CATEGORIES
--- ============================================================
+-- Categories
 CREATE TABLE IF NOT EXISTS categories (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name        VARCHAR(100) NOT NULL,
@@ -46,11 +34,7 @@ CREATE TABLE IF NOT EXISTS categories (
 CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug);
 CREATE INDEX IF NOT EXISTS idx_categories_active ON categories(is_active) WHERE is_active = true;
 
--- ============================================================
--- 3. PRODUCTS
--- buy_price: harga modal (hanya owner yang boleh lihat)
--- sell_price: harga jual
--- ============================================================
+-- Products
 CREATE TABLE IF NOT EXISTS products (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   category_id   UUID REFERENCES categories(id) ON DELETE SET NULL,
@@ -75,9 +59,7 @@ CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku) WHERE sku IS NOT NU
 CREATE INDEX IF NOT EXISTS idx_products_active ON products(is_active) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS idx_products_name_search ON products USING gin(to_tsvector('indonesian', name));
 
--- ============================================================
--- 4. TRANSACTIONS (header)
--- ============================================================
+-- Transactions
 CREATE TABLE IF NOT EXISTS transactions (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   receipt_number  VARCHAR(30) UNIQUE NOT NULL,
@@ -105,10 +87,7 @@ CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(created_at DESC
 CREATE INDEX IF NOT EXISTS idx_transactions_status ON transactions(status);
 CREATE INDEX IF NOT EXISTS idx_transactions_receipt ON transactions(receipt_number);
 
--- ============================================================
--- 5. TRANSACTION ITEMS (detail)
--- Snapshot harga pada saat transaksi (immutable)
--- ============================================================
+-- Transaction Items
 CREATE TABLE IF NOT EXISTS transaction_items (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   transaction_id  UUID NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
@@ -124,11 +103,7 @@ CREATE TABLE IF NOT EXISTS transaction_items (
 CREATE INDEX IF NOT EXISTS idx_tx_items_transaction ON transaction_items(transaction_id);
 CREATE INDEX IF NOT EXISTS idx_tx_items_product ON transaction_items(product_id);
 
--- ============================================================
--- 6. AUDIT TRAIL
--- Mencatat setiap aktivitas CRUD: Siapa, Jam Berapa, Aksi Apa
--- Untuk mencegah kecurangan internal
--- ============================================================
+-- Audit Logs
 CREATE TABLE IF NOT EXISTS audit_logs (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     UUID REFERENCES users(id) ON DELETE SET NULL,
@@ -151,9 +126,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_logs(action);
 CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_logs(entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_audit_date ON audit_logs(created_at DESC);
 
--- ============================================================
--- 7. AUTO-UPDATE updated_at TRIGGER
--- ============================================================
+-- Triggers
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -177,21 +150,10 @@ CREATE TRIGGER trg_products_updated_at
   BEFORE UPDATE ON products
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- ============================================================
--- 8. VIEWS
--- View produk tanpa harga modal (untuk kasir)
--- ============================================================
+-- Views
 CREATE OR REPLACE VIEW products_cashier_view AS
 SELECT
   id, category_id, sku, barcode, name, description,
   sell_price, stock, min_stock, unit, image_url,
   is_active, created_at, updated_at
 FROM products;
-
--- ============================================================
--- 9. PARTITION AUDIT LOGS BY MONTH (opsional, untuk skala besar)
--- Uncomment jika diperlukan
--- ============================================================
--- CREATE TABLE audit_logs_partitioned (
---   LIKE audit_logs INCLUDING ALL
--- ) PARTITION BY RANGE (created_at);
