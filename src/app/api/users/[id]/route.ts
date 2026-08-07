@@ -133,7 +133,7 @@ export async function DELETE(
     if (!updatedRow) return apiInternal('Gagal menonaktifkan pengguna');
 
     await auditLog(user, 'DELETE', 'user', id, {
-      description: \`Menonaktifkan pengguna \${updatedRow.username}\`,
+      description: `Menonaktifkan pengguna ${updatedRow.username}`,
       request,
     });
 

@@ -22,17 +22,15 @@ async function seed() {
 
     // ---- Generate password hashes ----
     console.log('Generating password hashes...');
-    const ownerHash = await hash('owner123', 10);
-    const adminHash = await hash('admin123', 10);
-    const kasirHash = await hash('kasir123', 10);
+    const defaultPinHash = await hash('123456', 10);
 
     // ---- Seed Users ----
     console.log('Creating default users...');
 
     const users = [
-      { username: 'owner', hash: ownerHash, fullName: 'Pemilik Toko', role: 'owner' },
-      { username: 'admin', hash: adminHash, fullName: 'Administrator', role: 'admin' },
-      { username: 'kasir', hash: kasirHash, fullName: 'Kasir 1', role: 'kasir' },
+      { username: 'owner', hash: defaultPinHash, fullName: 'Pemilik Toko', role: 'owner' },
+      { username: 'admin', hash: defaultPinHash, fullName: 'Administrator', role: 'admin' },
+      { username: 'kasir', hash: defaultPinHash, fullName: 'Kasir 1', role: 'kasir' },
     ];
 
     for (const user of users) {
@@ -107,11 +105,11 @@ async function seed() {
     console.log('\n========================================');
     console.log('[OK] Seed completed successfully!');
     console.log('========================================');
-    console.log('\nDefault login credentials:');
-    console.log('  Owner → owner / owner123');
-    console.log('  Admin → admin / admin123');
-    console.log('  Kasir → kasir / kasir123');
-    console.log('\n[WARNING] GANTI PASSWORD setelah login pertama!');
+    console.log('\nDefault login credentials (6-digit PIN):');
+    console.log('  Owner → owner / 123456');
+    console.log('  Admin → admin / 123456');
+    console.log('  Kasir → kasir / 123456');
+    console.log('\n[WARNING] GANTI PIN setelah login pertama!');
 
   } catch (error) {
     console.error('[ERROR] Seed failed:', error);

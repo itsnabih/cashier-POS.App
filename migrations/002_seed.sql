@@ -15,28 +15,28 @@
 INSERT INTO users (username, password_hash, full_name, role)
 VALUES (
   'owner',
-  '$2a$10$8KzQ5x5G5v5X5Z5Y5W5V5.5U5T5S5R5Q5P5O5N5M5L5K5J5I5H5G5',
+  '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07Xd00DMxs.AQubh4a',
   'Pemilik Toko',
   'owner'
-) ON CONFLICT (username) DO NOTHING;
+) ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash;
 
 -- Admin (inventaris)
 INSERT INTO users (username, password_hash, full_name, role)
 VALUES (
   'admin',
-  '$2a$10$placeholder_admin_hash',
+  '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07Xd00DMxs.AQubh4a',
   'Administrator',
   'admin'
-) ON CONFLICT (username) DO NOTHING;
+) ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash;
 
 -- Kasir (POS only)
 INSERT INTO users (username, password_hash, full_name, role)
 VALUES (
   'kasir',
-  '$2a$10$placeholder_kasir_hash',
+  '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07Xd00DMxs.AQubh4a',
   'Kasir 1',
   'kasir'
-) ON CONFLICT (username) DO NOTHING;
+) ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash;
 
 -- ============================================================
 -- Sample Categories

@@ -9,7 +9,7 @@
 -- ============================================================
 ALTER TABLE products ADD COLUMN IF NOT EXISTS expired_date DATE;
 
-CREATE INDEX idx_products_expired ON products(expired_date)
+CREATE INDEX IF NOT EXISTS idx_products_expired ON products(expired_date)
   WHERE expired_date IS NOT NULL;
 
 -- ============================================================
@@ -27,9 +27,10 @@ CREATE TABLE IF NOT EXISTS suppliers (
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_suppliers_name ON suppliers(name);
-CREATE INDEX idx_suppliers_active ON suppliers(is_active) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_suppliers_name ON suppliers(name);
+CREATE INDEX IF NOT EXISTS idx_suppliers_active ON suppliers(is_active) WHERE is_active = true;
 
+DROP TRIGGER IF EXISTS trg_suppliers_updated_at ON suppliers;
 CREATE TRIGGER trg_suppliers_updated_at
   BEFORE UPDATE ON suppliers
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -52,10 +53,11 @@ CREATE TABLE IF NOT EXISTS purchase_orders (
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_po_supplier ON purchase_orders(supplier_id);
-CREATE INDEX idx_po_status ON purchase_orders(status);
-CREATE INDEX idx_po_date ON purchase_orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_po_supplier ON purchase_orders(supplier_id);
+CREATE INDEX IF NOT EXISTS idx_po_status ON purchase_orders(status);
+CREATE INDEX IF NOT EXISTS idx_po_date ON purchase_orders(created_at DESC);
 
+DROP TRIGGER IF EXISTS trg_purchase_orders_updated_at ON purchase_orders;
 CREATE TRIGGER trg_purchase_orders_updated_at
   BEFORE UPDATE ON purchase_orders
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -76,8 +78,8 @@ CREATE TABLE IF NOT EXISTS purchase_order_items (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_po_items_po ON purchase_order_items(po_id);
-CREATE INDEX idx_po_items_product ON purchase_order_items(product_id);
+CREATE INDEX IF NOT EXISTS idx_po_items_po ON purchase_order_items(po_id);
+CREATE INDEX IF NOT EXISTS idx_po_items_product ON purchase_order_items(product_id);
 
 -- ============================================================
 -- 5. STOCK OPNAME (Stok Opname Header)
@@ -97,9 +99,10 @@ CREATE TABLE IF NOT EXISTS stock_opnames (
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_opname_status ON stock_opnames(status);
-CREATE INDEX idx_opname_date ON stock_opnames(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_opname_status ON stock_opnames(status);
+CREATE INDEX IF NOT EXISTS idx_opname_date ON stock_opnames(created_at DESC);
 
+DROP TRIGGER IF EXISTS trg_stock_opnames_updated_at ON stock_opnames;
 CREATE TRIGGER trg_stock_opnames_updated_at
   BEFORE UPDATE ON stock_opnames
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -122,8 +125,8 @@ CREATE TABLE IF NOT EXISTS stock_opname_items (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_opname_items_opname ON stock_opname_items(opname_id);
-CREATE INDEX idx_opname_items_product ON stock_opname_items(product_id);
+CREATE INDEX IF NOT EXISTS idx_opname_items_opname ON stock_opname_items(opname_id);
+CREATE INDEX IF NOT EXISTS idx_opname_items_product ON stock_opname_items(product_id);
 
 -- ============================================================
 -- 7. INVENTORY ADJUSTMENTS
@@ -145,6 +148,6 @@ CREATE TABLE IF NOT EXISTS inventory_adjustments (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_adj_product ON inventory_adjustments(product_id);
-CREATE INDEX idx_adj_type ON inventory_adjustments(adjustment_type);
-CREATE INDEX idx_adj_date ON inventory_adjustments(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_adj_product ON inventory_adjustments(product_id);
+CREATE INDEX IF NOT EXISTS idx_adj_type ON inventory_adjustments(adjustment_type);
+CREATE INDEX IF NOT EXISTS idx_adj_date ON inventory_adjustments(created_at DESC);

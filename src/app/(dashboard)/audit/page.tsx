@@ -9,7 +9,12 @@ type DatePreset = 'today' | '7days' | '30days' | 'this-month' | 'custom';
 
 function getPresetDates(p: DatePreset) {
   const today = new Date();
-  const format = (d: Date) => d.toISOString().split('T')[0];
+  const format = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
   const todayStr = format(today);
 
   switch (p) {

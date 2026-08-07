@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { type POSCart } from '@/types/pos';
 import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut';
+import { ReceiptContent, type ReceiptItem } from '@/components/pos/ReceiptContent';
 
 export interface CompletedTransaction {
   receiptNumber: string;
@@ -19,7 +20,35 @@ interface ReceiptModalProps {
   storeName?: string;
 }
 
-export function ReceiptModal({ isOpen, onClose, transaction, storeName = 'BabyPOS' }: ReceiptModalProps) {
+export function ReceiptModal({ isOpen, onClose, transaction, storeName: propStoreName }: ReceiptModalProps) {
+  const [storeSettings, setStoreSettings] = useState({
+    storeName: propStoreName || 'Sumber Baby Shop',
+    storeAddress: 'Jl. Raya Bayi No. 123, Kota Balita',
+    storePhone: '0812-3456-7890',
+    footerTitle: 'TERIMA KASIH',
+    footerSub: 'SELAMAT BELANJA KEMBALI',
+  });
+
+  useEffect(() => {
+    if (isOpen) {
+      fetch('/api/settings')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.data) {
+            const s = data.data;
+            setStoreSettings({
+              storeName: s['store.name'] || propStoreName || 'Sumber Baby Shop',
+              storeAddress: s['store.address'] || 'Jl. Raya Bayi No. 123, Kota Balita',
+              storePhone: s['store.phone'] || '0812-3456-7890',
+              footerTitle: s['receipt.footer_title'] || 'TERIMA KASIH',
+              footerSub: s['receipt.footer_sub'] || 'SELAMAT BELANJA KEMBALI',
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isOpen, propStoreName]);
+
   useKeyboardShortcut([
     {
       options: { key: 'Escape', enabled: isOpen },
@@ -31,35 +60,42 @@ export function ReceiptModal({ isOpen, onClose, transaction, storeName = 'BabyPO
     },
     {
       options: { key: 'Enter', enabled: isOpen },
-      handler: onClose, // also close on enter to quickly move to next customer
+      handler: onClose,
     }
   ]);
 
   if (!isOpen || !transaction) return null;
 
-  const { cart, receiptNumber, timestamp, paymentMethod, paymentAmount, changeAmount, cashierName } = transaction;
+  const { cart, receiptNumber, timestamp, paymentAmount, changeAmount, cashierName } = transaction;
 
-  const formatRupiah = (val: number) => {
-    return (val / 100).toLocaleString('id-ID');
-  };
+  const items: ReceiptItem[] = cart.items.map(item => {
+    const itemSubtotal = (item.originalPrice * item.quantity) - (item.discount * item.quantity);
+    return {
+      name: item.name,
+      price: item.originalPrice,
+      quantity: item.quantity,
+      discount: item.discount,
+      subtotal: itemSubtotal,
+    };
+  });
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleString('id-ID', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  const totalDiscount = cart.items.reduce((sum, item) => sum + (item.discount * item.quantity), 0) + (cart.discount || 0);
 
-  const getMethodName = (m: string) => {
-    switch (m) {
-      case 'cash': return 'Tunai';
-      case 'qris': return 'QRIS';
-      case 'transfer': return 'Transfer';
-      default: return m;
-    }
+  const receiptProps = {
+    storeName: storeSettings.storeName,
+    storeAddress: storeSettings.storeAddress,
+    storePhone: storeSettings.storePhone,
+    receiptNumber,
+    cashierName,
+    timestamp,
+    items,
+    subtotal: cart.subtotal,
+    totalDiscount,
+    totalNett: cart.total,
+    paymentAmount,
+    changeAmount,
+    footerTitle: storeSettings.footerTitle,
+    footerSub: storeSettings.footerSub,
   };
 
   return (
@@ -76,21 +112,8 @@ export function ReceiptModal({ isOpen, onClose, transaction, storeName = 'BabyPO
 
         {/* Scrollable Receipt Area */}
         <div className="p-6 bg-slate-100 overflow-y-auto max-h-[60vh] flex justify-center">
-          {/* This inner div mimics the printed receipt visually */}
-          <div className="bg-white w-[80mm] min-h-[100mm] p-4 shadow-sm border border-slate-200" style={{ fontFamily: 'monospace' }}>
-            <ReceiptContent 
-              storeName={storeName} 
-              receiptNumber={receiptNumber} 
-              timestamp={timestamp} 
-              cart={cart} 
-              paymentMethod={paymentMethod} 
-              paymentAmount={paymentAmount} 
-              changeAmount={changeAmount} 
-              cashierName={cashierName}
-              formatRupiah={formatRupiah} 
-              formatDate={formatDate} 
-              getMethodName={getMethodName} 
-            />
+          <div className="bg-white w-[80mm] min-h-[100mm] p-4 shadow-md rounded border border-slate-200">
+            <ReceiptContent {...receiptProps} />
           </div>
         </div>
 
@@ -111,20 +134,8 @@ export function ReceiptModal({ isOpen, onClose, transaction, storeName = 'BabyPO
       </div>
 
       {/* Actual Print Content (Visible only in print mode) */}
-      <div className="hidden print:block w-[80mm] text-black bg-white" style={{ fontFamily: 'monospace' }}>
-        <ReceiptContent 
-          storeName={storeName} 
-          receiptNumber={receiptNumber} 
-          timestamp={timestamp} 
-          cart={cart} 
-          paymentMethod={paymentMethod} 
-          paymentAmount={paymentAmount} 
-          changeAmount={changeAmount}
-          cashierName={cashierName}
-          formatRupiah={formatRupiah} 
-          formatDate={formatDate} 
-          getMethodName={getMethodName} 
-        />
+      <div className="hidden print:block w-[80mm] text-black bg-white p-2">
+        <ReceiptContent {...receiptProps} />
       </div>
       
       <style dangerouslySetInnerHTML={{__html: `
@@ -149,81 +160,6 @@ export function ReceiptModal({ isOpen, onClose, transaction, storeName = 'BabyPO
           }
         }
       `}} />
-    </div>
-  );
-}
-
-interface ReceiptContentProps {
-  storeName: string;
-  receiptNumber: string;
-  timestamp: Date;
-  cart: POSCart;
-  paymentMethod: string;
-  paymentAmount: number;
-  changeAmount: number;
-  cashierName: string;
-  formatRupiah: (v: number) => string;
-  formatDate: (d: Date) => string;
-  getMethodName: (m: string) => string;
-}
-
-function ReceiptContent({ storeName, receiptNumber, timestamp, cart, paymentMethod, paymentAmount, changeAmount, cashierName, formatRupiah, formatDate, getMethodName }: ReceiptContentProps) {
-  return (
-    <div className="text-xs leading-tight">
-      <div className="text-center mb-4">
-        <h1 className="text-base font-bold mb-1">{storeName}</h1>
-        <p>Struk Pembelian</p>
-      </div>
-
-      <div className="mb-3">
-        <p>No   : {receiptNumber}</p>
-        <p>Tgl  : {formatDate(timestamp)}</p>
-        <p>Kasir: {cashierName}</p>
-      </div>
-
-      <div className="border-t border-b border-dashed border-black py-2 mb-2 space-y-2">
-        {cart.items.map((item, idx) => {
-          const itemSubtotal = (item.originalPrice * item.quantity) - (item.discount * item.quantity);
-          return (
-            <div key={idx}>
-              <div className="font-semibold">{item.name}</div>
-              <div className="flex justify-between mt-1">
-                <div>
-                  {item.quantity} x {formatRupiah(item.originalPrice)}
-                  {item.discount > 0 && ` (-${formatRupiah(item.discount)})`}
-                </div>
-                <div>{formatRupiah(itemSubtotal)}</div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="space-y-1 mt-3">
-        {cart.discount > 0 && (
-          <div className="flex justify-between text-black">
-            <span>Diskon:</span>
-            <span>-{formatRupiah(cart.discount)}</span>
-          </div>
-        )}
-        <div className="flex justify-between font-bold text-sm">
-          <span>Total:</span>
-          <span>{formatRupiah(cart.total)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Bayar ({getMethodName(paymentMethod)}):</span>
-          <span>{formatRupiah(paymentAmount)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Kembali:</span>
-          <span>{formatRupiah(changeAmount)}</span>
-        </div>
-      </div>
-
-      <div className="text-center mt-6 text-[10px]">
-        <p>Terima Kasih</p>
-        <p>Barang yang sudah dibeli tidak dapat ditukar/dikembalikan</p>
-      </div>
     </div>
   );
 }

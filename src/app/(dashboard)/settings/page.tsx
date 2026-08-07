@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { ReceiptContent } from '@/components/pos/ReceiptContent';
 
 type SettingsTab = 'profile' | 'users' | 'pos' | 'inventory' | 'system';
 
@@ -10,10 +11,10 @@ export default function SettingsPage() {
   const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
     {
       id: 'profile',
-      label: 'Profil Toko',
+      label: 'Kustom Struk',
       icon: (
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0v2.828c0 .334.136.653.38.893l1.058 1.059h8.122l1.058-1.059a1.25 1.25 0 00.38-.893V7.034z" />
         </svg>
       )
     },
@@ -31,7 +32,7 @@ export default function SettingsPage() {
       label: 'POS & Struk',
       icon: (
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0v2.828c0 .334.136.653.38.893l1.058 1.059h8.122l1.058-1.059a1.25 1.25 0 00.38-.893V7.034z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z" />
         </svg>
       )
     },
@@ -49,7 +50,7 @@ export default function SettingsPage() {
       label: 'Sistem',
       icon: (
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535m0 0A23.74 23.74 0 0018.795 3m.38 1.125a23.91 23.91 0 011.014 5.395m-1.014-5.395c-.318.557-.615 1.135-.89 1.729m2.284 3.666c.01.212.015.426.015.64 0 .214-.005.428-.015.64m-.015-1.28c-.316.557-.614 1.135-.89 1.73m2.284-3.665a23.908 23.908 0 01-1.014 5.395m0 0a23.74 23.74 0 01-1.014 5.395m1.014-5.395c.318.557.615 1.135.89 1.73m-2.284 3.665c-.01.212-.015.426-.015.64 0 .214.005.428.015.64m.015-1.28c.316.557.614 1.135.89 1.73m-2.284-3.665a23.905 23.905 0 011.014 5.395m0 0a23.74 23.74 0 011.014 5.395" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535m0 0A23.74 23.74 0 0018.795 3m.38 1.125a23.91 23.91 0 011.014 5.395m-1.014-5.395c-.318.557-.615 1.135-.89 1.729m2.284 3.666c.01.212.015.426.015.64 0 .214-.005.428-.015.64m-.015-1.28c-.316.557-.614 1.135-.89 1.73m2.284-3.665a23.908 23.908 0 01-1.014 5.395m0 0a23.74 23.74 0 01-1.014 5.395m1.014-5.395c.318.557.615 1.135.89 1.73m-2.284 3.665c-.01.212-.015.426-.015.64 0 .214.005.428.015.64m.015-1.28c.316.557-.614 1.135-.89 1.73m-2.284-3.665a23.905 23.905 0 011.014 5.395m0 0a23.74 23.74 0 011.014 5.395" />
         </svg>
       )
     }
@@ -90,7 +91,7 @@ export default function SettingsPage() {
 
         {/* Content Area */}
         <div className="card p-6">
-          {activeTab === 'profile' && <ProfileSettings />}
+          {activeTab === 'profile' && <KustomStrukSettings />}
           {activeTab === 'users' && <UsersSettings />}
           {activeTab === 'pos' && <POSSettings />}
           {activeTab === 'inventory' && <InventorySettings />}
@@ -101,44 +102,204 @@ export default function SettingsPage() {
   );
 }
 
-function ProfileSettings() {
+function KustomStrukSettings() {
+  const [formData, setFormData] = useState({
+    storeName: 'Sumber Baby Shop',
+    storeAddress: 'Jl. Raya Bayi No. 123, Kota Balita',
+    storePhone: '0812-3456-7890',
+    footerTitle: 'TERIMA KASIH',
+    footerSub: 'SELAMAT BELANJA KEMBALI',
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          const s = data.data;
+          setFormData({
+            storeName: s['store.name'] || 'Sumber Baby Shop',
+            storeAddress: s['store.address'] || 'Jl. Raya Bayi No. 123, Kota Balita',
+            storePhone: s['store.phone'] || '0812-3456-7890',
+            footerTitle: s['receipt.footer_title'] || 'TERIMA KASIH',
+            footerSub: s['receipt.footer_sub'] || 'SELAMAT BELANJA KEMBALI',
+          });
+        }
+      })
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    setSuccessMsg('');
+    try {
+      const payload = {
+        'store.name': formData.storeName,
+        'store.address': formData.storeAddress,
+        'store.phone': formData.storePhone,
+        'receipt.footer_title': formData.footerTitle,
+        'receipt.footer_sub': formData.footerSub,
+      };
+
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSuccessMsg('Kustomisasi struk berhasil disimpan!');
+        setTimeout(() => setSuccessMsg(''), 3000);
+      } else {
+        alert(data.message || 'Gagal menyimpan kustomisasi');
+      }
+    } catch (err) {
+      alert('Terjadi kesalahan saat menyimpan kustomisasi');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const dummyItems = [
+    { name: 'SGM Bunda 200g', price: 3200000, quantity: 2, discount: 0, subtotal: 6400000 },
+    { name: 'Pampers Premium S 48', price: 10900000, quantity: 1, discount: 900000, subtotal: 10000000 },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="border-b border-slate-200 pb-4">
-        <h3 className="text-base font-semibold text-slate-800">Profil Toko</h3>
-        <p className="text-xs text-slate-500 mt-1">Informasi dasar toko Anda yang akan ditampilkan pada struk.</p>
-      </div>
-      
-      <div className="grid grid-cols-1 gap-4">
+      <div className="border-b border-slate-200 pb-4 flex justify-between items-center">
         <div>
-          <label className="block text-xs font-medium text-slate-700 mb-1">Nama Toko</label>
-          <input type="text" className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md bg-white focus:border-baby-500 focus:ring-1 focus:ring-baby-500 outline-none" defaultValue="Sumber Baby shop" readOnly />
+          <h3 className="text-base font-semibold text-slate-800">Kustom Struk</h3>
+          <p className="text-xs text-slate-500 mt-1">
+            Kustomisasi informasi dan pesan struk fisik yang dicetak untuk pelanggan.
+          </p>
         </div>
-        <div>
-          <label className="block text-xs font-medium text-slate-700 mb-1">Alamat Toko</label>
-          <textarea className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md bg-white focus:border-baby-500 focus:ring-1 focus:ring-baby-500 outline-none" rows={3} defaultValue="Jl. Raya Bayi No. 123, Kota Balita" readOnly />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Nomor Telepon</label>
-            <input type="text" className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md bg-white focus:border-baby-500 focus:ring-1 focus:ring-baby-500 outline-none" defaultValue="0812-3456-7890" readOnly />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
-            <input type="email" className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md bg-white focus:border-baby-500 focus:ring-1 focus:ring-baby-500 outline-none" defaultValue="halo@sumberbabyshop.com" readOnly />
-          </div>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Pesan Kaki Struk (Footer)</label>
-          <input type="text" className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md bg-white focus:border-baby-500 focus:ring-1 focus:ring-baby-500 outline-none" defaultValue="Terima kasih telah berbelanja! Barang yang sudah dibeli tidak dapat dikembalikan." readOnly />
-        </div>
+        {successMsg && (
+          <span className="text-xs text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 font-medium animate-fade-in">
+            ✓ {successMsg}
+          </span>
+        )}
       </div>
 
-      <div className="flex justify-end pt-4">
-        <button type="button" className="px-4 py-2 bg-baby-600 text-white text-sm font-medium rounded-md hover:bg-baby-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-baby-500">
-          Simpan Perubahan
-        </button>
-      </div>
+      {isLoading ? (
+        <div className="py-8 text-center text-sm text-slate-500">Memuat pengaturan struk...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+          {/* Form Kustomisasi (Left side) */}
+          <form onSubmit={handleSave} className="md:col-span-7 space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Toko</label>
+              <input
+                type="text"
+                value={formData.storeName}
+                onChange={(e) => setFormData({ ...formData, storeName: e.target.value })}
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:border-baby-500 focus:ring-1 focus:ring-baby-500 outline-none transition-all"
+                placeholder="Contoh: Sumber Baby Shop"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Alamat Toko</label>
+              <textarea
+                rows={2}
+                value={formData.storeAddress}
+                onChange={(e) => setFormData({ ...formData, storeAddress: e.target.value })}
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:border-baby-500 focus:ring-1 focus:ring-baby-500 outline-none transition-all"
+                placeholder="Jl. Raya Bayi No. 123, Kota Balita"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Nomor HP / WhatsApp Toko</label>
+              <input
+                type="text"
+                value={formData.storePhone}
+                onChange={(e) => setFormData({ ...formData, storePhone: e.target.value })}
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:border-baby-500 focus:ring-1 focus:ring-baby-500 outline-none transition-all"
+                placeholder="0812-3456-7890"
+              />
+            </div>
+
+            <div className="pt-2 border-t border-slate-100">
+              <h4 className="text-xs font-bold text-slate-800 mb-3 uppercase tracking-wider">Pesan Footer Struk</h4>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Baris Footer 1</label>
+                  <input
+                    type="text"
+                    value={formData.footerTitle}
+                    onChange={(e) => setFormData({ ...formData, footerTitle: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:border-baby-500 focus:ring-1 focus:ring-baby-500 outline-none transition-all"
+                    placeholder="TERIMA KASIH"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Baris Footer 2</label>
+                  <input
+                    type="text"
+                    value={formData.footerSub}
+                    onChange={(e) => setFormData({ ...formData, footerSub: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:border-baby-500 focus:ring-1 focus:ring-baby-500 outline-none transition-all"
+                    placeholder="SELAMAT BELANJA KEMBALI"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 flex justify-end">
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="px-5 py-2.5 bg-baby-600 text-white text-sm font-semibold rounded-lg hover:bg-baby-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-baby-500 disabled:opacity-50 transition-all shadow-sm flex items-center gap-2"
+              >
+                {isSaving ? 'Menyimpan...' : 'Simpan Perubahan'}
+              </button>
+            </div>
+          </form>
+
+          {/* Live Preview Struk (Right side) */}
+          <div className="md:col-span-5 flex flex-col items-center">
+            <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col items-center sticky top-4">
+              <div className="flex items-center gap-2 mb-3 text-slate-600 font-semibold text-xs uppercase tracking-wider">
+                <svg className="w-4 h-4 text-baby-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                Preview Tampilan Struk
+              </div>
+
+              {/* Thermal Receipt Visual Container (Width fixed to ~300px thermal size) */}
+              <div className="bg-white w-full max-w-[310px] p-4 shadow-md rounded-lg border border-slate-200 relative">
+                <ReceiptContent
+                  storeName={formData.storeName}
+                  storeAddress={formData.storeAddress}
+                  storePhone={formData.storePhone}
+                  receiptNumber="TRX-20260808-0001"
+                  cashierName="Ahmad (Kasir)"
+                  timestamp={new Date()}
+                  items={dummyItems}
+                  subtotal={16400000}
+                  totalDiscount={900000}
+                  totalNett={15500000}
+                  paymentAmount={20000000}
+                  changeAmount={4500000}
+                  footerTitle={formData.footerTitle}
+                  footerSub={formData.footerSub}
+                />
+              </div>
+              <p className="text-[11px] text-slate-400 mt-3 text-center">
+                *Preview diperbarui secara otomatis saat input diubah.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

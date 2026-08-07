@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
+import { ReceiptContent, type ReceiptItem } from '@/components/pos/ReceiptContent';
 import type { Transaction, TransactionItem } from '@/types/transaction';
 import './print.css';
 
@@ -11,7 +12,12 @@ type DatePreset = 'today' | '7days' | '30days' | 'this-month' | 'custom';
 
 function getPresetDates(p: DatePreset) {
   const today = new Date();
-  const format = (d: Date) => d.toISOString().split('T')[0];
+  const format = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
   const todayStr = format(today);
 
   switch (p) {
@@ -31,6 +37,32 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [summary, setSummary] = useState({ totalRevenue: 0, totalCompleted: 0, totalVoided: 0 });
   const [loading, setLoading] = useState(true);
+  
+  const [storeSettings, setStoreSettings] = useState({
+    storeName: 'Sumber Baby Shop',
+    storeAddress: 'Jl. Raya Bayi No. 123, Kota Balita',
+    storePhone: '0812-3456-7890',
+    footerTitle: 'TERIMA KASIH',
+    footerSub: 'SELAMAT BELANJA KEMBALI',
+  });
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          const s = data.data;
+          setStoreSettings({
+            storeName: s['store.name'] || 'Sumber Baby Shop',
+            storeAddress: s['store.address'] || 'Jl. Raya Bayi No. 123, Kota Balita',
+            storePhone: s['store.phone'] || '0812-3456-7890',
+            footerTitle: s['receipt.footer_title'] || 'TERIMA KASIH',
+            footerSub: s['receipt.footer_sub'] || 'SELAMAT BELANJA KEMBALI',
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
   
   // Filters
   const [page, setPage] = useState(1);
@@ -353,65 +385,37 @@ export default function TransactionsPage() {
             
             {/* Receipt Area (POS-80 Format) */}
             <div className="p-4 overflow-y-auto print:overflow-visible print:p-0 pos-receipt font-mono text-xs text-black">
-              <div className="text-center mb-4">
-                <h2 className="text-base font-bold uppercase mb-1">SUMBER BABY SHOP</h2>
-                <p className="text-[10px] leading-tight">Jl. Raya Baby shop No. 123</p>
-                <p className="text-[10px] leading-tight">Telp: 0812-3456-7890</p>
-              </div>
-
-              <div className="border-t border-dashed border-black/30 py-2 mb-2 text-[10px]">
-                <div className="flex justify-between"><span>No.struk</span><span>{selectedTrx.receiptNumber}</span></div>
-                <div className="flex justify-between"><span>Oleh</span><span className="uppercase">{selectedTrx.cashierName}</span></div>
-                <div className="flex justify-between"><span>Tanggal & jam</span><span>{formatDateTime(selectedTrx.createdAt)}</span></div>
-                {selectedTrx.status === 'voided' && (
-                  <div className="text-center font-bold text-red-600 mt-1 uppercase border border-red-600 p-0.5 print:text-black print:border-black">*** VOIDED ***</div>
-                )}
-              </div>
-
-              <div className="border-t border-dashed border-black/30 pt-2 mb-2">
-                <div className="flex justify-between text-[10px] font-bold mb-1 pb-1 border-b border-dashed border-black/30">
-                  <span>Barang</span>
-                  <div className="flex gap-2 text-right">
-                    <span className="w-14">Harga</span>
-                    <span className="w-6">Jml</span>
-                    <span className="w-16">Total</span>
-                  </div>
+              {selectedTrx.status === 'voided' && (
+                <div className="text-center font-bold text-red-600 mb-2 uppercase border border-red-600 p-1 print:text-black print:border-black">
+                  *** VOIDED ***
                 </div>
-                {loadingItems ? (
-                  <div className="text-center py-4 print:hidden">Memuat barang...</div>
-                ) : (
-                  trxItems.map((item, idx) => (
-                    <div key={idx} className="mb-1 text-[10px]">
-                      <div className="font-semibold line-clamp-1">{item.productName}</div>
-                      <div className="flex justify-between">
-                        <span className="opacity-0">-</span>
-                        <div className="flex gap-2 text-right">
-                          <span className="w-14">{fmt(item.unitPrice)}</span>
-                          <span className="w-6">{item.quantity}</span>
-                          <span className="w-16">{fmt(item.subtotal)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              <div className="border-t border-dashed border-black/30 pt-2 text-[10px]">
-                <div className="flex justify-between mb-0.5"><span>Sub total</span><span>{fmt(selectedTrx.subtotal)}</span></div>
-                {selectedTrx.discount > 0 && <div className="flex justify-between mb-0.5"><span>Diskon</span><span>-{fmt(selectedTrx.discount)}</span></div>}
-                {selectedTrx.discount > 0 && <div className="flex justify-between mb-0.5"><span>Total diskon</span><span>-{fmt(selectedTrx.discount)}</span></div>}
-                <div className="flex justify-between font-bold text-sm mt-1 border-t border-black/10 pt-1"><span>Total nett</span><span>{fmt(selectedTrx.total)}</span></div>
-              </div>
-
-              <div className="mt-2 pt-2 border-t border-dashed border-black/30 text-[10px]">
-                <div className="flex justify-between"><span>Tunai</span><span>{fmt(selectedTrx.paymentAmount)}</span></div>
-                <div className="flex justify-between"><span>Kembalian</span><span>{fmt(selectedTrx.changeAmount)}</span></div>
-              </div>
-
-              <div className="text-center mt-6 text-[10px] border-t border-dashed border-black/30 pt-4">
-                <p>TERIMA KASIH</p>
-                <p>SELAMAT BELANJA KEMBALI</p>
-              </div>
+              )}
+              {loadingItems ? (
+                <div className="text-center py-8 print:hidden">Memuat barang...</div>
+              ) : (
+                <ReceiptContent
+                  storeName={storeSettings.storeName}
+                  storeAddress={storeSettings.storeAddress}
+                  storePhone={storeSettings.storePhone}
+                  receiptNumber={selectedTrx.receiptNumber}
+                  cashierName={selectedTrx.cashierName || 'Kasir'}
+                  timestamp={selectedTrx.createdAt}
+                  items={trxItems.map(item => ({
+                    name: item.productName,
+                    price: item.unitPrice,
+                    quantity: item.quantity,
+                    discount: item.discount || 0,
+                    subtotal: item.subtotal,
+                  }))}
+                  subtotal={selectedTrx.subtotal}
+                  totalDiscount={selectedTrx.discount}
+                  totalNett={selectedTrx.total}
+                  paymentAmount={selectedTrx.paymentAmount}
+                  changeAmount={selectedTrx.changeAmount}
+                  footerTitle={storeSettings.footerTitle}
+                  footerSub={storeSettings.footerSub}
+                />
+              )}
             </div>
             
             {/* Modal Footer (Screen Only) */}
