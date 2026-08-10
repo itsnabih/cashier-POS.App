@@ -70,6 +70,7 @@ const PurchaseItemSchema = z.object({
   productId: z.string().uuid(),
   quantity: z.number().int().positive('Kuantitas harus lebih dari 0'),
   unitCost: z.number().int().min(0, 'Harga beli tidak boleh negatif'),
+  batchNumber: z.string().optional().or(z.literal('')),
   expiredDate: z.string().nullable().optional(),
 });
 
@@ -202,13 +203,37 @@ export async function POST(request: NextRequest) {
         const netSubtotal = subtotal - itemDiscount + itemTax;
         const netUnitCost = item.quantity > 0 ? Math.round(netSubtotal / item.quantity) : 0;
 
-        // Insert PO item
+        // Auto-generate batch number if empty
+        const itemBatchNum = (item.batchNumber && item.batchNumber.trim().length > 0)
+          ? item.batchNumber.trim()
+          : `BATCH-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(i + 1).padStart(3, '0')}`;
+
+        // Insert into product_batches
+        const batchResult = await client.query(
+          `INSERT INTO product_batches (
+            product_id, po_id, batch_number, quantity_received, quantity_remaining, unit_cost, expired_date, status
+           )
+           VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')
+           RETURNING id`,
+          [
+            item.productId,
+            po.id,
+            itemBatchNum,
+            item.quantity,
+            item.quantity,
+            netUnitCost,
+            item.expiredDate || null,
+          ]
+        );
+        const batchId = batchResult.rows[0].id;
+
+        // Insert PO item with batch_id
         await client.query(
           `INSERT INTO purchase_order_items (
-            po_id, product_id, product_name, quantity, unit_cost, subtotal, net_unit_cost, expired_date
+            po_id, product_id, product_name, quantity, unit_cost, subtotal, net_unit_cost, expired_date, batch_id
            )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-          [po.id, item.productId, product.name, item.quantity, item.unitCost, subtotal, netUnitCost, item.expiredDate ?? null]
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+          [po.id, item.productId, product.name, item.quantity, item.unitCost, subtotal, netUnitCost, item.expiredDate || null, batchId]
         );
 
         if (d.autoReceive) {

@@ -7,6 +7,9 @@ import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/useToast';
 
+import { useBarcodeScanner } from '@/hooks/useBarcodeScanner';
+import { BatchLabelModal } from './BatchLabelModal';
+
 // ============================================================
 // Zod Schema — validates entire form including dynamic items
 // ============================================================
@@ -15,6 +18,7 @@ const ReceiveItemSchema = z.object({
   productId: z.string().min(1, 'Pilih produk'),
   quantity: z.number().int().positive('Qty harus > 0'),
   unitCost: z.number().min(0, 'Harga beli tidak boleh negatif'),
+  batchNumber: z.string().optional().or(z.literal('')),
   expiredDate: z.string().optional().or(z.literal('')),
 });
 
@@ -39,6 +43,7 @@ interface Product {
   id: string;
   name: string;
   sku: string | null;
+  barcode: string | null;
   stock: number;
   buyPrice?: number;
   sellPrice: number;
@@ -51,6 +56,8 @@ interface Product {
 export default function ReceiveGoodsForm() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingRef, setLoadingRef] = useState(true);
+  const [barcodeInput, setBarcodeInput] = useState('');
+  const [isLabelModalOpen, setIsLabelModalOpen] = useState(false);
   const router = useRouter();
   const { addToast } = useToast();
 
@@ -60,6 +67,7 @@ export default function ReceiveGoodsForm() {
     control,
     handleSubmit,
     setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<z.input<typeof ReceiveFormSchema>, any, ReceiveFormValues>({
     resolver: zodResolver(ReceiveFormSchema),
@@ -87,6 +95,64 @@ export default function ReceiveGoodsForm() {
   const watchedDiscountValue = useWatch({ control, name: 'discountValue' });
   const watchedTaxType = useWatch({ control, name: 'taxType' });
   const watchedTaxValue = useWatch({ control, name: 'taxValue' });
+
+  // ---- Handle Barcode Scan / Lookup ----
+  const handleScanProduct = async (codeStr: string) => {
+    const code = codeStr.trim();
+    if (!code) return;
+
+    // 1. Search locally in loaded products
+    let prod = products.find(p => (p.barcode && p.barcode === code) || (p.sku && p.sku === code));
+
+    // 2. If not found locally, fetch API
+    if (!prod) {
+      try {
+        const res = await fetch(`/api/products/by-barcode/${encodeURIComponent(code)}`);
+        const json = await res.json();
+        if (json.success && json.data) {
+          prod = json.data;
+          setProducts(prev => [...prev, json.data]);
+        }
+      } catch {
+        // error handled below
+      }
+    }
+
+    if (!prod) {
+      addToast(`Produk dengan barcode "${code}" tidak ditemukan`, 'error');
+      setBarcodeInput('');
+      return;
+    }
+
+    // 3. Add to items array or increment Qty
+    const currentItems = getValues('items') || [];
+    const existingIndex = currentItems.findIndex(i => i.productId === prod!.id);
+
+    if (existingIndex >= 0) {
+      const currentQty = Number(currentItems[existingIndex].quantity) || 1;
+      setValue(`items.${existingIndex}.quantity`, currentQty + 1);
+      addToast(`Qty ${prod.name} bertambah (+1)`, 'success');
+    } else {
+      append({
+        productId: prod.id,
+        quantity: 1,
+        unitCost: prod.buyPrice ? prod.buyPrice / 100 : 0,
+        batchNumber: '',
+        expiredDate: '',
+      });
+      addToast(`${prod.name} ditambahkan`, 'success');
+    }
+
+    setBarcodeInput('');
+  };
+
+  // Enable HID barcode scanner listener
+  useBarcodeScanner({
+    onScan: (code) => {
+      handleScanProduct(code);
+    },
+    enabled: !loadingRef,
+  });
 
   // ---- Fetch reference data ----
   useEffect(() => {
@@ -184,7 +250,7 @@ export default function ReceiveGoodsForm() {
 
   // ---- Add item row ----
   function addItem() {
-    append({ productId: '', quantity: 1, unitCost: 0, expiredDate: '' });
+    append({ productId: '', quantity: 1, unitCost: 0, batchNumber: '', expiredDate: '' });
   }
 
   // ---- Submit ----
@@ -201,12 +267,12 @@ export default function ReceiveGoodsForm() {
       items: values.items.map((item) => ({
         productId: item.productId,
         quantity: item.quantity,
-        unitCost: item.unitCost, // Send as Rupiah, API converts to sen if needed (wait, no. API needs to convert to sen?? Let's check API. Ah, wait. The API assumes item.unitCost is what is sent. In the old code we did Math.round(item.unitCost * 100). Wait, yes.)
+        unitCost: item.unitCost,
+        batchNumber: item.batchNumber || undefined,
+        expiredDate: item.expiredDate || undefined,
       })),
     };
 
-    // Wait, the API I rewrote doesn't multiply unitCost by 100! 
-    // Let me convert it here.
     const finalPayload = {
       ...payload,
       discountValue: payload.discountType === 'fixed' ? payload.discountValue * 100 : payload.discountValue,
@@ -214,6 +280,8 @@ export default function ReceiveGoodsForm() {
       items: payload.items.map(i => ({
         ...i,
         unitCost: Math.round(i.unitCost * 100),
+        batchNumber: i.batchNumber,
+        expiredDate: i.expiredDate,
       }))
     };
 
@@ -297,17 +365,77 @@ export default function ReceiveGoodsForm() {
             </div>
           </section>
 
-          {/* === Items Table === */}
+          {/* === Barcode Scanner & Items Table === */}
           <section className="card p-5">
+            {/* Barcode Quick Input Bar */}
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0c-.693.047-1.328.437-1.737 1.04l-.821 1.316z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-800">Barcode Scanner</span>
+                    <span className="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      Scanner Aktif
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500">Scan barcode / SKU produk untuk memasukkan barang langsung ke daftar</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={barcodeInput}
+                  onChange={(e) => setBarcodeInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleScanProduct(barcodeInput);
+                    }
+                  }}
+                  placeholder="Scan / Ketik Barcode/SKU + Enter..."
+                  className="px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-baby-500/20 focus:border-baby-500 w-full sm:w-64"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleScanProduct(barcodeInput)}
+                  className="px-3 py-1.5 text-xs font-bold bg-baby-600 text-white rounded-lg hover:bg-baby-700 transition-colors shrink-0"
+                >
+                  Cari
+                </button>
+              </div>
+            </div>
+
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-slate-800">Daftar Barang</h2>
-              <button
-                type="button"
-                onClick={addItem}
-                className="px-3 py-1.5 text-xs font-medium text-baby-600 bg-baby-50 border border-baby-200 rounded-md hover:bg-baby-100 transition-colors"
-              >
-                + Tambah Item
-              </button>
+              <h2 className="text-sm font-semibold text-slate-800">Daftar Barang ({fields.length} Item)</h2>
+              <div className="flex gap-2">
+                {fields.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsLabelModalOpen(true)}
+                    className="px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md hover:bg-emerald-100 transition-colors flex items-center gap-1.5"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
+                    </svg>
+                    Cetak Label Barcode
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={addItem}
+                  className="px-3 py-1.5 text-xs font-medium text-baby-600 bg-baby-50 border border-baby-200 rounded-md hover:bg-baby-100 transition-colors"
+                >
+                  + Tambah Item
+                </button>
+              </div>
             </div>
 
             {errors.items?.root && (
@@ -319,20 +447,21 @@ export default function ReceiveGoodsForm() {
 
             {fields.length === 0 ? (
               <div className="text-center py-8 text-sm text-slate-400">
-                Belum ada item. Klik &quot;Tambah Item&quot; untuk memulai.
+                Belum ada item. Scan barcode atau klik &quot;Tambah Item&quot; untuk memulai.
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-200">
-                      <th className="text-left py-2 px-2 text-xs font-medium text-slate-500 w-[240px]">Produk</th>
-                      <th className="text-right py-2 px-2 text-xs font-medium text-slate-500 w-20">Stok</th>
+                      <th className="text-left py-2 px-2 text-xs font-medium text-slate-500 w-[200px]">Produk</th>
+                      <th className="text-left py-2 px-2 text-xs font-medium text-slate-500 w-28">No. Batch / Lot</th>
+                      <th className="text-right py-2 px-2 text-xs font-medium text-slate-500 w-16">Stok</th>
                       <th className="text-right py-2 px-2 text-xs font-medium text-slate-500 w-20">Qty</th>
-                      <th className="text-right py-2 px-2 text-xs font-medium text-slate-500 w-32">Harga Satuan (Rp)</th>
-                      <th className="text-right py-2 px-2 text-xs font-medium text-slate-500 w-28">Subtotal</th>
+                      <th className="text-right py-2 px-2 text-xs font-medium text-slate-500 w-28">Harga Satuan (Rp)</th>
+                      <th className="text-right py-2 px-2 text-xs font-medium text-slate-500 w-24">Subtotal</th>
                       <th className="text-center py-2 px-2 text-xs font-medium text-slate-500 w-32">Kedaluwarsa</th>
-                      <th className="text-right py-2 px-2 text-xs font-medium text-slate-500 w-28">MAC Baru</th>
+                      <th className="text-right py-2 px-2 text-xs font-medium text-slate-500 w-24">MAC Baru</th>
                       <th className="w-10" />
                     </tr>
                   </thead>
@@ -347,7 +476,7 @@ export default function ReceiveGoodsForm() {
                           <td className="py-2 px-2">
                             <select
                               {...register(`items.${index}.productId`)}
-                              className={inputCls(itemErrors?.productId) + ' text-sm'}
+                              className={inputCls(itemErrors?.productId) + ' text-xs'}
                             >
                               <option value="">Pilih produk</option>
                               {products.map((p) => (
@@ -361,8 +490,18 @@ export default function ReceiveGoodsForm() {
                             )}
                           </td>
 
+                          {/* Batch Number */}
+                          <td className="py-2 px-2">
+                            <input
+                              {...register(`items.${index}.batchNumber`)}
+                              type="text"
+                              placeholder="Otomatis / Supplier Lot"
+                              className={inputCls() + ' text-xs font-mono uppercase'}
+                            />
+                          </td>
+
                           {/* Current stock (derived) */}
-                          <td className="py-2 px-2 text-right text-slate-500 tabular-nums">
+                          <td className="py-2 px-2 text-right text-slate-500 tabular-nums text-xs">
                             {preview?.currentStock ?? '-'}
                           </td>
 
@@ -371,7 +510,7 @@ export default function ReceiveGoodsForm() {
                             <input
                               {...register(`items.${index}.quantity`, { valueAsNumber: true })}
                               type="number"
-                              className={inputCls(itemErrors?.quantity) + ' text-right tabular-nums'}
+                              className={inputCls(itemErrors?.quantity) + ' text-right tabular-nums text-xs font-semibold'}
                               min={1}
                             />
                           </td>
@@ -381,13 +520,13 @@ export default function ReceiveGoodsForm() {
                             <input
                               {...register(`items.${index}.unitCost`, { valueAsNumber: true })}
                               type="number"
-                              className={inputCls(itemErrors?.unitCost) + ' text-right tabular-nums'}
+                              className={inputCls(itemErrors?.unitCost) + ' text-right tabular-nums text-xs'}
                               min={0}
                             />
                           </td>
 
                           {/* Subtotal (derived) */}
-                          <td className="py-2 px-2 text-right text-slate-700 tabular-nums font-medium">
+                          <td className="py-2 px-2 text-right text-slate-700 tabular-nums font-medium text-xs">
                             {preview?.subtotal
                               ? preview.subtotal.toLocaleString('id-ID')
                               : '-'}
@@ -537,6 +676,24 @@ export default function ReceiveGoodsForm() {
           </div>
         </div>
       </div>
+
+      {/* Batch Barcode Label Modal */}
+      <BatchLabelModal
+        isOpen={isLabelModalOpen}
+        onClose={() => setIsLabelModalOpen(false)}
+        items={(watchedItems || []).map((item, idx) => {
+          const prod = products.find(p => p.id === item.productId);
+          return {
+            productName: prod?.name || 'Produk',
+            productSku: prod?.sku,
+            barcode: prod?.barcode,
+            batchNumber: item.batchNumber || `BATCH-${idx + 1}`,
+            expiredDate: item.expiredDate,
+            sellPrice: prod?.sellPrice,
+            quantity: item.quantity || 1,
+          };
+        })}
+      />
     </form>
   );
 }

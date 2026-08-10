@@ -1,108 +1,68 @@
-// ============================================================
-// Barcode Scanner Hook
-//
-// Detects rapid sequential keystrokes (< 50ms per char) ending
-// with Enter — the typical pattern of USB barcode scanners
-// operating in keyboard emulation mode.
-//
-// When a barcode is detected, it searches the product catalog
-// and adds the matched product directly to the cart without
-// requiring manual input focus.
-// ============================================================
-
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 
-interface UseBarcodeScannnerOptions {
-  /**
-   * Called when a barcode scan is detected.
-   * Receives the raw barcode string.
-   */
+interface UseBarcodeScannerOptions {
   onScan: (barcode: string) => void;
-
-  /**
-   * Maximum time (ms) between keystrokes to still be
-   * considered scanner input. Default: 50ms.
-   */
-  maxKeystrokeInterval?: number;
-
-  /**
-   * Minimum barcode length to trigger. Default: 4.
-   */
-  minLength?: number;
-
-  /**
-   * Whether the scanner is enabled. Default: true.
-   */
   enabled?: boolean;
+  minChars?: number;
+  maxIntervalMs?: number;
 }
 
 export function useBarcodeScanner({
   onScan,
-  maxKeystrokeInterval = 50,
-  minLength = 4,
   enabled = true,
-}: UseBarcodeScannnerOptions) {
+  minChars = 3,
+  maxIntervalMs = 50,
+}: UseBarcodeScannerOptions) {
   const bufferRef = useRef<string>('');
-  const lastKeystrokeRef = useRef<number>(0);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const lastKeyTimeRef = useRef<number>(0);
+  const onScanRef = useRef(onScan);
 
-  const resetBuffer = useCallback(() => {
-    bufferRef.current = '';
-    lastKeystrokeRef.current = 0;
-  }, []);
+  // Keep callback ref fresh without re-registering the listener
+  useEffect(() => {
+    onScanRef.current = onScan;
+  }, [onScan]);
 
   useEffect(() => {
     if (!enabled) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      const now = Date.now();
-      const elapsed = now - lastKeystrokeRef.current;
+      // Ignore when user is typing in an input/textarea/select
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
-      // If Enter is pressed, check if buffer looks like a barcode
-      if (e.key === 'Enter') {
-        if (bufferRef.current.length >= minLength) {
-          // This was a scanner input — prevent form submission
+      // Ignore navigation / modifier keys
+      if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+      const currentTime = Date.now();
+      const timeDiff = currentTime - lastKeyTimeRef.current;
+      lastKeyTimeRef.current = currentTime;
+
+      // Handle Enter / Tab as completion signal from HID scanner
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        if (bufferRef.current.length >= minChars) {
           e.preventDefault();
-          e.stopPropagation();
-
-          const barcode = bufferRef.current.trim();
-          resetBuffer();
-          onScan(barcode);
-          return;
+          onScanRef.current(bufferRef.current);
         }
-        // Not a barcode, let Enter propagate normally
-        resetBuffer();
-        return;
-      }
-
-      // Only capture single printable characters
-      if (e.key.length !== 1 || e.ctrlKey || e.altKey || e.metaKey) {
-        return;
-      }
-
-      // If too much time has passed since last keystroke, reset
-      if (lastKeystrokeRef.current > 0 && elapsed > maxKeystrokeInterval) {
         bufferRef.current = '';
+        return;
       }
 
-      bufferRef.current += e.key;
-      lastKeystrokeRef.current = now;
-
-      // Safety: clear buffer after 500ms of no input
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(() => {
-        resetBuffer();
-      }, 500);
+      // Printable single character key
+      if (e.key.length === 1) {
+        if (timeDiff > maxIntervalMs && bufferRef.current.length > 0) {
+          // Time diff too large, reset buffer (user typed manually)
+          bufferRef.current = e.key;
+        } else {
+          bufferRef.current += e.key;
+        }
+      }
     };
 
-    // Use capture phase to intercept before other handlers
-    window.addEventListener('keydown', handleKeyDown, true);
-
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown, true);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [enabled, maxKeystrokeInterval, minLength, onScan, resetBuffer]);
+  }, [enabled, minChars, maxIntervalMs]);
 }

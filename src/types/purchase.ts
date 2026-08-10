@@ -9,6 +9,7 @@ export interface PurchaseOrder {
   receivedBy: string | null;
   receivedByName?: string;
   status: 'draft' | 'received' | 'cancelled';
+  totalAmount: number;
   source: string | null;
   referenceNumber: string | null;
   discountType: 'percentage' | 'fixed' | null;
@@ -42,6 +43,7 @@ export interface PurchaseOrderRow {
   received_by: string | null;
   received_by_name?: string;
   status: 'draft' | 'received' | 'cancelled';
+  total_amount: string;
   source: string | null;
   reference_number: string | null;
   discount_type: 'percentage' | 'fixed' | null;

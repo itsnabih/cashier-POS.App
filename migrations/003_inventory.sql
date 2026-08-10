@@ -34,6 +34,13 @@ CREATE TABLE IF NOT EXISTS purchase_orders (
   status          VARCHAR(20) NOT NULL DEFAULT 'draft'
                   CHECK (status IN ('draft', 'received', 'cancelled')),
   total_amount    BIGINT NOT NULL DEFAULT 0,
+  source          VARCHAR(255),
+  reference_number VARCHAR(100),
+  discount_type   VARCHAR(20),
+  discount_value  BIGINT DEFAULT 0,
+  tax_type        VARCHAR(20),
+  tax_value       BIGINT DEFAULT 0,
+  grand_total     BIGINT,
   notes           TEXT,
   received_at     TIMESTAMPTZ,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -58,6 +65,7 @@ CREATE TABLE IF NOT EXISTS purchase_order_items (
   quantity        INT NOT NULL CHECK (quantity > 0),
   unit_cost       BIGINT NOT NULL,
   subtotal        BIGINT NOT NULL,
+  net_unit_cost   BIGINT,
   expired_date    DATE,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

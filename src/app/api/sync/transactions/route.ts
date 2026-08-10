@@ -17,6 +17,7 @@ const transactionItemSchema = z.object({
   productId: z.string().uuid(),
   productName: z.string().min(1),
   productSku: z.string().nullable(),
+  batchId: z.string().uuid().nullable().optional(),
   quantity: z.number().int().positive(),
   unitPrice: z.number().int().nonnegative(),
   discount: z.number().int().nonnegative(),
@@ -90,13 +91,13 @@ export async function POST(request: NextRequest) {
 
       const transactionId = txResult.rows[0].id;
 
-      // 2. Insert transaction items
+      // 2. Insert transaction items & deduct stock (manual batch or FEFO fallback)
       for (const item of data.items) {
         await client.query(
           `INSERT INTO transaction_items (
             transaction_id, product_id, product_name, product_sku,
-            quantity, unit_price, discount, subtotal
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            quantity, unit_price, discount, subtotal, batch_id
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
           [
             transactionId,
             item.productId,
@@ -106,10 +107,50 @@ export async function POST(request: NextRequest) {
             item.unitPrice,
             item.discount,
             item.subtotal,
+            item.batchId || null,
           ]
         );
 
-        // 3. Decrease product stock
+        // Deduct from batch if specified manually by cashier
+        if (item.batchId) {
+          await client.query(
+            `UPDATE product_batches 
+             SET quantity_remaining = GREATEST(0, quantity_remaining - $1),
+                 status = CASE WHEN (quantity_remaining - $1) <= 0 THEN 'depleted' ELSE status END,
+                 updated_at = NOW()
+             WHERE id = $2`,
+            [item.quantity, item.batchId]
+          );
+        } else {
+          // FEFO fallback if cashier did not select batch manually
+          let remainingQtyToDeduct = item.quantity;
+          const activeBatches = await client.query(
+            `SELECT id, quantity_remaining 
+             FROM product_batches 
+             WHERE product_id = $1 AND status = 'active' AND quantity_remaining > 0
+             ORDER BY CASE WHEN expired_date IS NULL THEN 1 ELSE 0 END, expired_date ASC, created_at ASC`,
+            [item.productId]
+          );
+
+          for (const batchRow of activeBatches.rows) {
+            if (remainingQtyToDeduct <= 0) break;
+            const batchStock = Number(batchRow.quantity_remaining);
+            const deduct = Math.min(batchStock, remainingQtyToDeduct);
+
+            await client.query(
+              `UPDATE product_batches
+               SET quantity_remaining = quantity_remaining - $1,
+                   status = CASE WHEN (quantity_remaining - $1) <= 0 THEN 'depleted' ELSE 'active' END,
+                   updated_at = NOW()
+               WHERE id = $2`,
+              [deduct, batchRow.id]
+            );
+
+            remainingQtyToDeduct -= deduct;
+          }
+        }
+
+        // 3. Decrease overall product stock
         await client.query(
           `UPDATE products SET stock = stock - $1, updated_at = NOW()
            WHERE id = $2 AND stock >= $1`,

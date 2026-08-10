@@ -34,7 +34,7 @@ export default async function DashboardPage() {
   const lowStockCount = parseInt(prodStats?.low_stock_products || '0', 10);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount / 100);
   };
 
   return (

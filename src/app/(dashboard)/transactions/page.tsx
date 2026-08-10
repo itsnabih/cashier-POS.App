@@ -218,7 +218,8 @@ export default function TransactionsPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in print:p-0 print:m-0">
+    <>
+      <div className="space-y-6 print:p-0 print:m-0">
       
       {/* ---------- HEADER & SUMMARY (HIDDEN ON PRINT) ---------- */}
       <div className="print:hidden">
@@ -338,8 +339,14 @@ export default function TransactionsPage() {
                       </td>
                       <td className="px-4 py-3 text-right font-medium text-slate-800">{formatCurrency(trx.total)}</td>
                       <td className="px-4 py-3 text-center">
-                        <button className="text-baby-600 hover:bg-baby-50 px-2 py-1 rounded text-xs font-medium transition-colors">
-                          Detail
+                        <button
+                          className="p-1.5 text-slate-400 hover:text-baby-600 hover:bg-baby-50 rounded-lg transition-colors inline-flex items-center justify-center"
+                          title="Lihat Detail Transaksi"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
                         </button>
                       </td>
                     </tr>
@@ -369,82 +376,181 @@ export default function TransactionsPage() {
           )}
         </div>
       </div>
+    </div>
 
-      {/* ---------- MODAL DETAIL / RECEIPT (VISIBLE ON SCREEN & PRINTED) ---------- */}
+      {/* ---------- MODAL DETAIL / RECEIPT (SCREEN & PRINT) ---------- */}
       {selectedTrx && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in print:relative print:inset-auto print:bg-transparent print:p-0">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm max-h-[90vh] flex flex-col overflow-hidden print:w-[80mm] print:shadow-none print:max-w-none print:max-h-none print:rounded-none">
+        <div className="fixed inset-0 w-screen h-screen z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-md animate-in fade-in print:bg-transparent print:p-0">
+          
+          {/* SCREEN UI: Clean, proportional, modern modal */}
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[85vh] flex flex-col overflow-hidden border border-slate-100 print:hidden my-auto">
             
-            {/* Modal Header (Screen Only) */}
-            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50 print:hidden">
-              <h3 className="text-sm font-semibold text-slate-900">Detail Struk</h3>
-              <button onClick={() => setSelectedTrx(null)} className="text-slate-400 hover:text-slate-600 p-1">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-baby-50 text-baby-600 flex items-center justify-center font-semibold">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-slate-900">Detail Transaksi</h3>
+                    {selectedTrx.status === 'completed' ? (
+                      <span className="bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full text-xs font-semibold inline-flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        Berhasil
+                      </span>
+                    ) : (
+                      <span className="bg-red-100 text-red-700 px-2.5 py-0.5 rounded-full text-xs font-semibold inline-flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                        Dibatalkan (Void)
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs font-mono text-slate-500 mt-0.5">{selectedTrx.receiptNumber}</p>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setSelectedTrx(null)} 
+                className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition-colors"
+                title="Tutup"
+              >
                 ✕
               </button>
             </div>
             
-            {/* Receipt Area (POS-80 Format) */}
-            <div className="p-4 overflow-y-auto print:overflow-visible print:p-0 pos-receipt font-mono text-xs text-black">
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-6 text-sm text-slate-700">
+              
+              {/* Meta Info Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50/80 p-4 rounded-xl border border-slate-100">
+                <div>
+                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block mb-0.5">Waktu</span>
+                  <span className="text-xs font-semibold text-slate-800">{formatDateTime(selectedTrx.createdAt)}</span>
+                </div>
+                <div>
+                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block mb-0.5">Kasir</span>
+                  <span className="text-xs font-semibold text-slate-800">{selectedTrx.cashierName || 'Kasir'}</span>
+                </div>
+                <div>
+                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block mb-0.5">Metode Bayar</span>
+                  <span className="inline-block px-2 py-0.5 bg-slate-200/70 text-slate-700 text-[11px] font-bold rounded uppercase">
+                    {selectedTrx.paymentMethod}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block mb-0.5">Total Akhir</span>
+                  <span className="text-xs font-bold text-baby-600">{formatCurrency(selectedTrx.total)}</span>
+                </div>
+              </div>
+
+              {/* Void Warning Alert */}
               {selectedTrx.status === 'voided' && (
-                <div className="text-center font-bold text-red-600 mb-2 uppercase border border-red-600 p-1 print:text-black print:border-black">
-                  *** VOIDED ***
+                <div className="bg-red-50/80 border border-red-200/80 text-red-800 rounded-xl p-3.5 text-xs flex items-start gap-3">
+                  <span className="text-lg leading-none">⚠️</span>
+                  <div>
+                    <p className="font-bold text-red-900 mb-0.5">Transaksi Ini Telah Dibatalkan (VOID)</p>
+                    {selectedTrx.voidReason && (
+                      <p className="text-red-700">Alasan: <span className="italic">"{selectedTrx.voidReason}"</span></p>
+                    )}
+                  </div>
                 </div>
               )}
-              {loadingItems ? (
-                <div className="text-center py-8 print:hidden">Memuat barang...</div>
-              ) : (
-                <ReceiptContent
-                  storeName={storeSettings.storeName}
-                  storeAddress={storeSettings.storeAddress}
-                  storePhone={storeSettings.storePhone}
-                  receiptNumber={selectedTrx.receiptNumber}
-                  cashierName={selectedTrx.cashierName || 'Kasir'}
-                  timestamp={selectedTrx.createdAt}
-                  items={trxItems.map(item => ({
-                    name: item.productName,
-                    price: item.unitPrice,
-                    quantity: item.quantity,
-                    discount: item.discount || 0,
-                    subtotal: item.subtotal,
-                  }))}
-                  subtotal={selectedTrx.subtotal}
-                  totalDiscount={selectedTrx.discount}
-                  totalNett={selectedTrx.total}
-                  paymentAmount={selectedTrx.paymentAmount}
-                  changeAmount={selectedTrx.changeAmount}
-                  footerTitle={storeSettings.footerTitle}
-                  footerSub={storeSettings.footerSub}
-                />
-              )}
+
+              {/* Product Items Table */}
+              <div>
+                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Daftar Barang</h4>
+                {loadingItems ? (
+                  <div className="text-center py-8 text-slate-400 text-xs">Memuat daftar barang...</div>
+                ) : (
+                  <div className="border border-slate-100 rounded-xl overflow-hidden shadow-sm">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
+                        <tr>
+                          <th className="px-3.5 py-2.5">Produk</th>
+                          <th className="px-3.5 py-2.5 text-right">Harga</th>
+                          <th className="px-3.5 py-2.5 text-center">Qty</th>
+                          <th className="px-3.5 py-2.5 text-right">Diskon</th>
+                          <th className="px-3.5 py-2.5 text-right">Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 bg-white">
+                        {trxItems.map((item) => (
+                          <tr key={item.id} className="hover:bg-slate-50/50">
+                            <td className="px-3.5 py-2.5 font-medium text-slate-800">{item.productName}</td>
+                            <td className="px-3.5 py-2.5 text-right text-slate-600">{formatCurrency(item.unitPrice)}</td>
+                            <td className="px-3.5 py-2.5 text-center font-semibold text-slate-700">{item.quantity}</td>
+                            <td className="px-3.5 py-2.5 text-right text-slate-500">
+                              {item.discount > 0 ? `-${formatCurrency(item.discount)}` : '-'}
+                            </td>
+                            <td className="px-3.5 py-2.5 text-right font-semibold text-slate-800">{formatCurrency(item.subtotal)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* Payment Summary Box */}
+              <div className="flex justify-end">
+                <div className="w-full sm:w-72 bg-slate-50/80 rounded-xl p-4 border border-slate-100 space-y-2 text-xs">
+                  <div className="flex justify-between text-slate-600">
+                    <span>Subtotal</span>
+                    <span className="font-medium text-slate-800">{formatCurrency(selectedTrx.subtotal)}</span>
+                  </div>
+                  {selectedTrx.discount > 0 && (
+                    <div className="flex justify-between text-emerald-600">
+                      <span>Total Diskon</span>
+                      <span className="font-medium">-{formatCurrency(selectedTrx.discount)}</span>
+                    </div>
+                  )}
+                  <div className="border-t border-slate-200 pt-2 flex justify-between text-sm font-bold text-slate-900">
+                    <span>Total Nett</span>
+                    <span className="text-baby-600">{formatCurrency(selectedTrx.total)}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600 pt-1">
+                    <span>Nominal Bayar</span>
+                    <span className="font-medium text-slate-800">{formatCurrency(selectedTrx.paymentAmount)}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600">
+                    <span>Kembalian</span>
+                    <span className="font-medium text-slate-800">{formatCurrency(selectedTrx.changeAmount)}</span>
+                  </div>
+                </div>
+              </div>
+
             </div>
             
-            {/* Modal Footer (Screen Only) */}
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex flex-col gap-2 print:hidden">
+            {/* Modal Footer */}
+            <div className="p-4 bg-slate-50/80 border-t border-slate-100 flex flex-col gap-2">
               {/* Void Prompt */}
               {showVoidPrompt && selectedTrx.status === 'completed' && (
-                <div className="bg-red-50 p-3 rounded-lg border border-red-100 mb-2">
-                  <p className="text-xs font-semibold text-red-800 mb-2">Alasan Pembatalan:</p>
+                <div className="bg-red-50 p-3.5 rounded-xl border border-red-100 mb-1">
+                  <p className="text-xs font-semibold text-red-800 mb-2">Masukkan Alasan Pembatalan Transaksi:</p>
                   <input 
                     type="text" 
                     value={voidReason}
                     onChange={(e) => setVoidReason(e.target.value)}
-                    placeholder="Contoh: Salah input barang"
-                    className="w-full px-2 py-1 text-sm border border-red-200 rounded mb-2 outline-none focus:border-red-500"
+                    placeholder="Contoh: Salah input barang / pelanggan retur"
+                    className="w-full px-3 py-1.5 text-xs bg-white border border-red-200 rounded-lg mb-2 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
                     autoFocus
                   />
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 justify-end">
+                    <button 
+                      onClick={() => setShowVoidPrompt(false)}
+                      className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-50 transition-colors"
+                    >
+                      Batal
+                    </button>
                     <button 
                       onClick={handleVoidTransaction}
                       disabled={isVoiding}
-                      className="flex-1 bg-red-600 text-white text-xs font-bold py-2 rounded hover:bg-red-700 disabled:opacity-50"
+                      className="px-4 py-1.5 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors shadow-sm"
                     >
                       {isVoiding ? 'Memproses...' : 'Konfirmasi Void'}
-                    </button>
-                    <button 
-                      onClick={() => setShowVoidPrompt(false)}
-                      className="px-3 py-2 bg-white border border-slate-300 text-slate-600 rounded text-xs font-medium"
-                    >
-                      Batal
                     </button>
                   </div>
                 </div>
@@ -452,31 +558,72 @@ export default function TransactionsPage() {
 
               {/* Action Buttons */}
               {!showVoidPrompt && (
-                <div className="flex gap-2 w-full">
+                <div className="flex items-center gap-3 w-full">
                   <button 
                     onClick={handlePrint}
-                    className="flex-1 flex justify-center items-center gap-2 bg-baby-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-baby-700 transition-colors"
+                    className="flex-1 flex justify-center items-center gap-2 bg-baby-600 text-white font-semibold py-2.5 px-4 rounded-xl hover:bg-baby-700 transition-colors shadow-sm text-xs"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                    Cetak Ulang
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                    Cetak Ulang Struk
                   </button>
                   
                   {/* Only Owner can see the Void button */}
                   {user?.role === 'owner' && selectedTrx.status === 'completed' && (
                     <button 
                       onClick={() => setShowVoidPrompt(true)}
-                      className="flex items-center justify-center bg-red-100 text-red-600 font-medium py-2 px-4 rounded-lg hover:bg-red-200 transition-colors"
+                      className="flex items-center justify-center bg-red-50 text-red-600 border border-red-100 font-semibold py-2.5 px-4 rounded-xl hover:bg-red-100 transition-colors text-xs"
                       title="Batalkan Transaksi"
                     >
-                      Batalkan
+                      Batalkan Transaksi
                     </button>
                   )}
+
+                  <button
+                    onClick={() => setSelectedTrx(null)}
+                    className="px-4 py-2.5 bg-white border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 transition-colors text-xs"
+                  >
+                    Tutup
+                  </button>
                 </div>
               )}
             </div>
           </div>
+
+          {/* PRINT ONLY: POS-80 Thermal Receipt Container */}
+          <div className="hidden print:block pos-receipt">
+            {selectedTrx.status === 'voided' && (
+              <div className="text-center font-bold text-red-600 mb-2 uppercase border border-red-600 p-1 print:text-black print:border-black">
+                *** VOIDED ***
+              </div>
+            )}
+            <ReceiptContent
+              storeName={storeSettings.storeName}
+              storeAddress={storeSettings.storeAddress}
+              storePhone={storeSettings.storePhone}
+              receiptNumber={selectedTrx.receiptNumber}
+              cashierName={selectedTrx.cashierName || 'Kasir'}
+              timestamp={selectedTrx.createdAt}
+              items={trxItems.map(item => ({
+                name: item.productName,
+                price: item.unitPrice,
+                quantity: item.quantity,
+                discount: item.discount || 0,
+                subtotal: item.subtotal,
+              }))}
+              subtotal={selectedTrx.subtotal}
+              totalDiscount={selectedTrx.discount}
+              totalNett={selectedTrx.total}
+              paymentAmount={selectedTrx.paymentAmount}
+              changeAmount={selectedTrx.changeAmount}
+              footerTitle={storeSettings.footerTitle}
+              footerSub={storeSettings.footerSub}
+            />
+          </div>
+
         </div>
       )}
-    </div>
+    </>
   );
 }

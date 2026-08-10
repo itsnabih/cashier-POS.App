@@ -107,7 +107,7 @@ export default function PosPage() {
 
   useBarcodeScanner({
     onScan: handleBarcodeScan,
-    minLength: 4,
+    minChars: 4,
     enabled: !isPaymentModalOpen,
   });
 
