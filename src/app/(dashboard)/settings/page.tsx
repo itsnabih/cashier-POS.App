@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ReceiptContent } from '@/components/pos/ReceiptContent';
+import { Check } from 'lucide-react';
 
 type SettingsTab = 'profile' | 'users' | 'pos' | 'inventory' | 'system';
 
@@ -180,8 +181,9 @@ function KustomStrukSettings() {
           </p>
         </div>
         {successMsg && (
-          <span className="text-xs text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 font-medium animate-fade-in">
-            ✓ {successMsg}
+          <span className="text-xs text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 font-medium animate-fade-in flex items-center gap-1">
+            <Check className="w-3.5 h-3.5" />
+            <span>{successMsg}</span>
           </span>
         )}
       </div>

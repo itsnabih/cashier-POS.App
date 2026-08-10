@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { type POSCart } from '@/types/pos';
 import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut';
 import { ReceiptContent, type ReceiptItem } from '@/components/pos/ReceiptContent';
+import { exportReceiptPDF } from '@/utils/export-pdf';
+import { Printer, FileText, X } from 'lucide-react';
 
 export interface CompletedTransaction {
   receiptNumber: string;
@@ -98,15 +100,22 @@ export function ReceiptModal({ isOpen, onClose, transaction, storeName: propStor
     footerSub: storeSettings.footerSub,
   };
 
+  const handleDownloadPDF = () => {
+    exportReceiptPDF({
+      ...receiptProps,
+      isVoided: false,
+    });
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print:bg-transparent print:p-0 print:backdrop-blur-none print:items-start print:justify-start">
       
       {/* Modal Container (Hidden in print) */}
-      <div className="bg-slate-100 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col animate-scale-in border border-slate-200 print:hidden relative">
+      <div className="bg-slate-100 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-scale-in border border-slate-200 print:hidden relative">
         <div className="p-4 bg-white border-b flex justify-between items-center">
           <h2 className="font-bold text-slate-800">Transaksi Berhasil</h2>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1 rounded-md transition-colors">
-            ✕
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -117,16 +126,24 @@ export function ReceiptModal({ isOpen, onClose, transaction, storeName: propStor
           </div>
         </div>
 
-        <div className="p-4 bg-white border-t flex gap-3">
+        <div className="p-4 bg-white border-t flex flex-wrap gap-2">
           <button
             onClick={() => window.print()}
-            className="flex-1 py-2.5 bg-brand-blue text-white font-bold rounded-lg hover:bg-brand-blue-dark transition-colors flex items-center justify-center gap-2"
+            className="flex-1 py-2.5 px-3 bg-brand-blue text-white text-xs font-bold rounded-xl hover:bg-brand-blue-dark transition-colors flex items-center justify-center gap-1.5 shadow-sm"
           >
-            🖨️ Cetak Struk (Ctrl+P)
+            <Printer className="w-4 h-4" />
+            <span>Cetak Struk</span>
+          </button>
+          <button
+            onClick={handleDownloadPDF}
+            className="flex-1 py-2.5 px-3 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+          >
+            <FileText className="w-4 h-4" />
+            <span>Unduh PDF (A4)</span>
           </button>
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200 transition-colors"
+            className="w-full py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-200 transition-colors mt-1"
           >
             Selesai (Enter)
           </button>
@@ -134,25 +151,30 @@ export function ReceiptModal({ isOpen, onClose, transaction, storeName: propStor
       </div>
 
       {/* Actual Print Content (Visible only in print mode) */}
-      <div className="hidden print:block w-[80mm] text-black bg-white p-2">
+      <div className="hidden print:block w-[78mm] max-w-[78mm] text-black bg-white p-2 mx-auto">
         <ReceiptContent {...receiptProps} />
       </div>
       
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
           body * {
-            visibility: hidden;
+            visibility: hidden !important;
           }
           .print\\:block, .print\\:block * {
-            visibility: visible;
+            visibility: visible !important;
           }
           .print\\:block {
-            position: absolute;
-            left: 0;
-            top: 0;
-            margin: 0;
-            padding: 0;
-            width: 100%;
+            position: absolute !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: 0 !important;
+            margin: 0 auto !important;
+            padding: 2mm !important;
+            width: 78mm !important;
+            max-width: 78mm !important;
+            box-sizing: border-box !important;
+            background: white !important;
+            color: black !important;
           }
           @page {
             margin: 0;

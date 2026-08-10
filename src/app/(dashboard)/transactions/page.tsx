@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { ReceiptContent, type ReceiptItem } from '@/components/pos/ReceiptContent';
+import { exportReceiptPDF } from '@/utils/export-pdf';
+import { Printer, FileText, X } from 'lucide-react';
 import type { Transaction, TransactionItem } from '@/types/transaction';
 import './print.css';
 
@@ -198,6 +200,33 @@ export default function TransactionsPage() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPDF = () => {
+    if (!selectedTrx) return;
+    exportReceiptPDF({
+      storeName: storeSettings.storeName,
+      storeAddress: storeSettings.storeAddress,
+      storePhone: storeSettings.storePhone,
+      receiptNumber: selectedTrx.receiptNumber,
+      cashierName: selectedTrx.cashierName || 'Kasir',
+      timestamp: selectedTrx.createdAt,
+      items: trxItems.map((item) => ({
+        name: item.productName,
+        price: item.unitPrice,
+        quantity: item.quantity,
+        discount: item.discount || 0,
+        subtotal: item.subtotal,
+      })),
+      subtotal: selectedTrx.subtotal,
+      totalDiscount: selectedTrx.discount,
+      totalNett: selectedTrx.total,
+      paymentAmount: selectedTrx.paymentAmount,
+      changeAmount: selectedTrx.changeAmount,
+      footerTitle: storeSettings.footerTitle,
+      footerSub: storeSettings.footerSub,
+      isVoided: selectedTrx.status === 'voided',
+    });
   };
 
   const formatCurrency = (amount: number) => {
@@ -558,22 +587,28 @@ export default function TransactionsPage() {
 
               {/* Action Buttons */}
               {!showVoidPrompt && (
-                <div className="flex items-center gap-3 w-full">
+                <div className="flex flex-wrap items-center gap-2 w-full">
                   <button 
                     onClick={handlePrint}
-                    className="flex-1 flex justify-center items-center gap-2 bg-baby-600 text-white font-semibold py-2.5 px-4 rounded-xl hover:bg-baby-700 transition-colors shadow-sm text-xs"
+                    className="flex-1 flex justify-center items-center gap-1.5 bg-baby-600 text-white font-semibold py-2.5 px-3 rounded-xl hover:bg-baby-700 transition-colors shadow-sm text-xs"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                    </svg>
-                    Cetak Ulang Struk
+                    <Printer className="w-4 h-4" />
+                    <span>Cetak Struk</span>
+                  </button>
+
+                  <button 
+                    onClick={handleDownloadPDF}
+                    className="flex-1 flex justify-center items-center gap-1.5 bg-emerald-600 text-white font-semibold py-2.5 px-3 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm text-xs"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>Unduh PDF (A4)</span>
                   </button>
                   
                   {/* Only Owner can see the Void button */}
                   {user?.role === 'owner' && selectedTrx.status === 'completed' && (
                     <button 
                       onClick={() => setShowVoidPrompt(true)}
-                      className="flex items-center justify-center bg-red-50 text-red-600 border border-red-100 font-semibold py-2.5 px-4 rounded-xl hover:bg-red-100 transition-colors text-xs"
+                      className="flex items-center justify-center bg-red-50 text-red-600 border border-red-100 font-semibold py-2.5 px-3 rounded-xl hover:bg-red-100 transition-colors text-xs"
                       title="Batalkan Transaksi"
                     >
                       Batalkan Transaksi

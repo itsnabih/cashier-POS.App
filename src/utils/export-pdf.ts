@@ -292,3 +292,166 @@ export function exportBestSellersPDF(data: BestSellersData) {
 
   pdfMake.createPdf(docDefinition).download(`best-seller_${data.period.from}_${data.period.to}.pdf`);
 }
+
+// ============================================================
+// Export Receipt PDF (A4 Format)
+// ============================================================
+
+export interface ReceiptPDFData {
+  storeName?: string;
+  storeAddress?: string;
+  storePhone?: string;
+  receiptNumber: string;
+  cashierName?: string;
+  timestamp: Date | string;
+  items: Array<{
+    name: string;
+    price: number;
+    quantity: number;
+    discount: number;
+    subtotal: number;
+  }>;
+  subtotal: number;
+  totalDiscount: number;
+  totalNett: number;
+  paymentAmount: number;
+  changeAmount: number;
+  footerTitle?: string;
+  footerSub?: string;
+  isVoided?: boolean;
+}
+
+export function exportReceiptPDF(data: ReceiptPDFData) {
+  const storeName = data.storeName || 'Sumber Baby Shop';
+  const storeAddress = data.storeAddress || 'Jl. Raya Bayi No. 123, Kota Balita';
+  const storePhone = data.storePhone || '0812-3456-7890';
+  const cashierName = data.cashierName || 'Kasir';
+  const footerTitle = data.footerTitle || 'TERIMA KASIH';
+  const footerSub = data.footerSub || 'SELAMAT BELANJA KEMBALI';
+
+  let dateFormatted = '-';
+  try {
+    const d = typeof data.timestamp === 'string' ? new Date(data.timestamp) : data.timestamp;
+    if (!isNaN(d.getTime())) {
+      dateFormatted = d.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+    }
+  } catch {
+    dateFormatted = String(data.timestamp);
+  }
+
+  const tableBody = [
+    [
+      { text: '#', style: 'tableHeader', alignment: 'center' as const },
+      { text: 'Nama Produk', style: 'tableHeader' },
+      { text: 'Harga Satuan', style: 'tableHeader', alignment: 'right' as const },
+      { text: 'Qty', style: 'tableHeader', alignment: 'center' as const },
+      { text: 'Diskon', style: 'tableHeader', alignment: 'right' as const },
+      { text: 'Subtotal', style: 'tableHeader', alignment: 'right' as const },
+    ],
+    ...data.items.map((item, idx) => [
+      { text: String(idx + 1), style: 'tableCell', alignment: 'center' as const },
+      { text: item.name, style: 'tableCell' },
+      { text: fmtRp(item.price), style: 'tableCellRight' },
+      { text: String(item.quantity), style: 'tableCell', alignment: 'center' as const },
+      { text: item.discount > 0 ? `-${fmtRp(item.discount * item.quantity)}` : '-', style: 'tableCellRight', color: item.discount > 0 ? '#16A34A' : '#666666' },
+      { text: fmtRp(item.subtotal), style: 'tableCellRight', bold: true },
+    ]),
+  ];
+
+  const docDefinition: any = {
+    pageSize: 'A4',
+    pageOrientation: 'portrait',
+    pageMargins: [40, 40, 40, 40],
+    content: [
+      { text: storeName.toUpperCase(), style: 'header' },
+      { text: `${storeAddress}${storePhone ? ' | Telp: ' + storePhone : ''}`, style: 'subheader' },
+      { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1, lineColor: '#4F46E5' }] },
+      
+      { text: data.isVoided ? '*** STRUK DIBATALKAN (VOIDED) ***' : 'STRUK PEMBAYARAN', fontSize: 13, bold: true, alignment: 'center', color: data.isVoided ? '#DC2626' : '#1E293B', margin: [0, 12, 0, 12] },
+
+      // Transaction Metadata Box
+      {
+        table: {
+          widths: ['*', '*'],
+          body: [
+            [
+              { text: [{ text: 'No. Struk: ', bold: true }, data.receiptNumber], fontSize: 9 },
+              { text: [{ text: 'Tanggal: ', bold: true }, dateFormatted], fontSize: 9, alignment: 'right' as const },
+            ],
+            [
+              { text: [{ text: 'Kasir: ', bold: true }, cashierName], fontSize: 9 },
+              { text: [{ text: 'Status: ', bold: true }, data.isVoided ? 'VOIDED' : 'LUNAS'], fontSize: 9, alignment: 'right' as const, color: data.isVoided ? '#DC2626' : '#16A34A' },
+            ],
+          ],
+        },
+        layout: 'noBorders',
+        margin: [0, 0, 0, 16],
+      },
+
+      // Items Table
+      {
+        table: {
+          headerRows: 1,
+          widths: [20, '*', 80, 35, 75, 85],
+          body: tableBody,
+        },
+        layout: {
+          hLineWidth: (i: number, node: any) => (i === 0 || i === 1 || i === node.table.body.length) ? 1 : 0.5,
+          vLineWidth: () => 0,
+          hLineColor: (i: number, node: any) => (i === 0 || i === 1 || i === node.table.body.length) ? '#4F46E5' : '#E2E8F0',
+          paddingLeft: () => 6,
+          paddingRight: () => 6,
+          paddingTop: () => 6,
+          paddingBottom: () => 6,
+        },
+        margin: [0, 0, 0, 16],
+      },
+
+      // Summary Breakdown
+      {
+        columns: [
+          { width: '*', text: '' },
+          {
+            width: 220,
+            table: {
+              widths: ['*', 'auto'],
+              body: [
+                [{ text: 'Subtotal:', fontSize: 9, color: '#475569' }, { text: fmtRp(data.subtotal), fontSize: 9, alignment: 'right' as const }],
+                ...(data.totalDiscount > 0
+                  ? [[{ text: 'Total Diskon:', fontSize: 9, color: '#16A34A' }, { text: `-${fmtRp(data.totalDiscount)}`, fontSize: 9, alignment: 'right' as const, color: '#16A34A' }]]
+                  : []),
+                [{ text: 'Total Nett:', fontSize: 10, bold: true, color: '#0F172A' }, { text: fmtRp(data.totalNett), fontSize: 10, bold: true, alignment: 'right' as const, color: '#4F46E5' }],
+                [{ text: 'Nominal Dibayar:', fontSize: 9, color: '#475569' }, { text: fmtRp(data.paymentAmount), fontSize: 9, alignment: 'right' as const }],
+                [{ text: 'Kembalian:', fontSize: 9, bold: true, color: '#0F172A' }, { text: fmtRp(data.changeAmount), fontSize: 9, bold: true, alignment: 'right' as const }],
+              ],
+            },
+            layout: {
+              hLineWidth: (i: number) => i === 2 ? 1 : 0,
+              vLineWidth: () => 0,
+              hLineColor: () => '#CBD5E1',
+              paddingTop: () => 3,
+              paddingBottom: () => 3,
+            },
+          },
+        ],
+        margin: [0, 0, 0, 24],
+      },
+
+      // Footer
+      {
+        text: `${footerTitle}\n${footerSub}`,
+        alignment: 'center',
+        fontSize: 10,
+        bold: true,
+        color: '#334155',
+        margin: [0, 12, 0, 0],
+      },
+
+      generateFooter(),
+    ],
+    styles: STYLES,
+  };
+
+  pdfMake.createPdf(docDefinition).download(`struk_${data.receiptNumber}.pdf`);
+}
+
