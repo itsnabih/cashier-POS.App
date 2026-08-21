@@ -22,6 +22,8 @@ export async function GET(request: NextRequest) {
     const search = params.get('search') ? sanitizeSearchQuery(params.get('search')!) : null;
     const categoryId = params.get('category') || null;
     const activeOnly = params.get('active') !== 'false';
+    const all = params.get('all') === 'true';
+
     const { page, limit, offset } = sanitizePagination(
       params.get('page') ?? undefined,
       params.get('limit') ?? undefined
@@ -61,7 +63,24 @@ export async function GET(request: NextRequest) {
       ? 'p.*, c.name as category_name, (SELECT MAX(t.created_at) FROM transaction_items ti JOIN transactions t ON ti.transaction_id = t.id WHERE ti.product_id = p.id) as last_sold_at'
       : 'p.id, p.category_id, p.sku, p.barcode, p.name, p.description, p.sell_price, p.stock, p.min_stock, p.unit, p.image_url, p.is_active, p.expired_date, p.created_at, p.updated_at, c.name as category_name, (SELECT MAX(t.created_at) FROM transaction_items ti JOIN transactions t ON ti.transaction_id = t.id WHERE ti.product_id = p.id) as last_sold_at';
 
-    // Fetch rows
+    if (all) {
+      const rows = await query<ProductRow & { category_name: string }>(
+        `SELECT ${selectColumns}
+         FROM products p
+         LEFT JOIN categories c ON c.id = p.category_id
+         ${whereClause}
+         ORDER BY p.name ASC`,
+        values
+      );
+
+      const products = canSeeBuyPrice
+        ? rows.map((r) => ({ ...mapProductRow(r), categoryName: r.category_name }))
+        : rows.map((r) => ({ ...mapProductRowCashier(r), categoryName: r.category_name }));
+
+      return apiSuccess(products);
+    }
+
+    // Fetch rows paginated
     const rows = await query<ProductRow & { category_name: string }>(
       `SELECT ${selectColumns}
        FROM products p
@@ -89,7 +108,7 @@ export async function GET(request: NextRequest) {
 
 const CreateProductSchema = z.object({
   name: z.string().min(1, 'Nama produk wajib diisi').max(200).transform(sanitizeString),
-  categoryId: z.string().uuid().nullable().optional(),
+  categoryId: z.string().uuid('Kategori wajib dipilih'),
   sku: z.string().max(50).transform(sanitizeString).nullable().optional(),
   barcode: z.string().max(50).transform(sanitizeString).nullable().optional(),
   description: z.string().max(1000).transform(sanitizeString).nullable().optional(),
@@ -116,6 +135,10 @@ export async function POST(request: NextRequest) {
 
     const d = parsed.data;
 
+    // Check duplicate name
+    const existingName = await queryOne('SELECT id FROM products WHERE name ILIKE $1', [d.name]);
+    if (existingName) return apiBadRequest('Nama produk sudah digunakan');
+
     // Check duplicate SKU/barcode
     if (d.sku) {
       const existing = await queryOne('SELECT id FROM products WHERE sku = $1', [d.sku]);
@@ -130,7 +153,7 @@ export async function POST(request: NextRequest) {
       `INSERT INTO products (name, category_id, sku, barcode, description, buy_price, sell_price, stock, min_stock, unit, image_url, expired_date)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING *`,
-      [d.name, d.categoryId ?? null, d.sku ?? null, d.barcode ?? null, d.description ?? null,
+      [d.name, d.categoryId, d.sku ?? null, d.barcode ?? null, d.description ?? null,
        d.buyPrice, d.sellPrice, d.stock, d.minStock, d.unit, d.imageUrl ?? null, d.expiredDate ?? null]
     );
 

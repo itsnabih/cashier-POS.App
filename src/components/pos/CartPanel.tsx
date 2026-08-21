@@ -1,5 +1,5 @@
 import { type POSCart } from '@/types/pos';
-import { Trash2, Plus, Minus } from 'lucide-react';
+import { Trash2, Plus, Minus, Tag } from 'lucide-react';
 
 interface CartPanelProps {
   cart: POSCart;
@@ -7,6 +7,8 @@ interface CartPanelProps {
   onRemoveItem: (id: string) => void;
   onClearCart: () => void;
   onPay: () => void;
+  onItemDiscount: (cartItemId: string) => void;
+  onCartDiscount: () => void;
 }
 
 export function CartPanel({
@@ -15,6 +17,8 @@ export function CartPanel({
   onRemoveItem,
   onClearCart,
   onPay,
+  onItemDiscount,
+  onCartDiscount,
 }: CartPanelProps) {
   return (
     <div className="flex flex-col h-full bg-white relative rounded-r-2xl overflow-hidden shadow-[-4px_0_24px_rgba(0,0,0,0.02)]">
@@ -57,8 +61,13 @@ export function CartPanel({
                     <p className="text-xs font-bold text-slate-500">
                       Rp {(item.unitPrice / 100).toLocaleString('id-ID')}
                     </p>
-                    {item.discount > 0 && (
+                    {item.autoDiscount > 0 && (
                       <span className="px-1.5 py-0.5 bg-brand-pink-light/30 text-brand-pink-dark text-[9px] font-black rounded-sm border border-brand-pink-light/50">
+                        AUTO
+                      </span>
+                    )}
+                    {item.manualDiscount > 0 && (
+                      <span className="px-1.5 py-0.5 bg-brand-yellow/60 text-amber-700 text-[9px] font-black rounded-sm border border-brand-yellow-dark/30">
                         DISC
                       </span>
                     )}
@@ -87,12 +96,21 @@ export function CartPanel({
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
-                <button
-                  onClick={() => onRemoveItem(item.id)}
-                  className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200 active-scale"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => onItemDiscount(item.id)}
+                    className="p-1.5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors duration-200 active-scale"
+                    title="Diskon Item"
+                  >
+                    <Tag className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => onRemoveItem(item.id)}
+                    className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200 active-scale"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           ))
@@ -108,14 +126,39 @@ export function CartPanel({
           </div>
           {cart.discount > 0 && (
             <div className="flex justify-between text-sm text-brand-pink-dark font-medium">
-              <span>Diskon</span>
+              <span>Diskon Item</span>
               <span className="font-bold">- Rp {(cart.discount / 100).toLocaleString('id-ID')}</span>
+            </div>
+          )}
+          {cart.manualCartDiscount > 0 && (
+            <div className="flex justify-between text-sm text-amber-600 font-medium">
+              <span className="flex items-center gap-1">
+                <Tag className="w-3.5 h-3.5" />
+                Diskon Keranjang
+                {cart.manualCartDiscountType === 'percent' && (
+                  <span className="text-[10px] font-black bg-amber-100 px-1 py-0.5 rounded">
+                    {cart.manualCartDiscountValue}%
+                  </span>
+                )}
+              </span>
+              <span className="font-bold">- Rp {(cart.manualCartDiscount / 100).toLocaleString('id-ID')}</span>
             </div>
           )}
           <div className="flex justify-between items-center text-xl font-black text-slate-900 pt-3 border-t border-sky-50 mt-2">
             <span>Total</span>
             <span className="text-brand-blue-dark">Rp {(cart.total / 100).toLocaleString('id-ID')}</span>
           </div>
+        </div>
+
+        <div className="flex gap-2 mb-3">
+          <button
+            onClick={onCartDiscount}
+            disabled={cart.items.length === 0}
+            className="flex-1 py-2.5 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl font-bold text-xs hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5 active-scale"
+          >
+            <Tag className="w-3.5 h-3.5" />
+            {cart.manualCartDiscount > 0 ? 'Ubah Diskon' : 'Diskon'}
+          </button>
         </div>
 
         <button

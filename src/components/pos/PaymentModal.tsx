@@ -84,6 +84,20 @@ export function PaymentModal({ isOpen, onClose, cart, onProcessPayment }: Paymen
             <p className="text-4xl font-black text-brand-blue-dark tracking-tight">
               {formatRupiah(total)}
             </p>
+            {(cart.discount > 0 || cart.manualCartDiscount > 0) && (
+              <div className="mt-2 pt-2 border-t border-brand-sky-light/60 space-y-0.5">
+                {cart.discount > 0 && (
+                  <p className="text-xs text-brand-pink-dark font-semibold">
+                    Diskon Item: -{formatRupiah(cart.discount)}
+                  </p>
+                )}
+                {cart.manualCartDiscount > 0 && (
+                  <p className="text-xs text-amber-600 font-semibold">
+                    Diskon Keranjang: -{formatRupiah(cart.manualCartDiscount)}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div>

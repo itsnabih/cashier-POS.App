@@ -1,16 +1,97 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/hooks/useAuth';
+import { PERMISSIONS } from '@/lib/rbac';
+import { useToast } from '@/hooks/useToast';
+import { Tag, Plus, Loader2 } from 'lucide-react';
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  productCount: number;
+  isActive: boolean;
+}
 
 export default function CategoriesPage() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  
+  const { hasPermission } = useAuth();
+  const { addToast } = useToast();
+  const canCreate = hasPermission(PERMISSIONS.CATEGORY_CREATE);
+
+  const fetchCategories = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/categories?all=true');
+      const data = await res.json();
+      if (data.success) {
+        setCategories(data.data);
+      }
+    } catch {
+      addToast('Gagal memuat data kategori', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [addToast]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCatName.trim()) return;
+    
+    setIsSaving(true);
+    try {
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newCatName.trim() }),
+      });
+      const data = await res.json();
+      
+      if (res.ok && data.success) {
+        addToast('Kategori berhasil ditambahkan', 'success');
+        setNewCatName('');
+        setIsModalOpen(false);
+        fetchCategories(); // refresh
+      } else {
+        addToast(data.error?.message || 'Gagal menambahkan kategori', 'error');
+      }
+    } catch {
+      addToast('Terjadi kesalahan jaringan', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-4 animate-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Produk</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Kategori Produk</h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Kelola produk dan kategori toko
+            Kelola pengelompokan produk
           </p>
         </div>
+        {canCreate && (
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-baby-600 rounded-md hover:bg-baby-500 transition-colors shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Tambah Kategori
+          </button>
+        )}
       </div>
 
       {/* Tab navigation */}
@@ -25,53 +106,113 @@ export default function CategoriesPage() {
           className="flex items-center gap-1.5 px-4 pb-2.5 text-sm font-medium transition-colors border-b-2 -mb-px border-b-baby-500 text-gray-800 cursor-default"
         >
           Kategori
+          <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 rounded-full">
+            {categories.length}
+          </span>
         </span>
       </div>
 
-      {/* Dev notes */}
-      <div className="card p-8 max-w-4xl">
-        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
-          <div className="w-10 h-10 rounded-lg bg-baby-50 flex items-center justify-center">
-            <svg className="w-5 h-5 text-baby-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
-            </svg>
-          </div>
-          <div>
-            <h3 className="text-base font-semibold text-slate-900">Catatan Pengembangan: Kategori Produk</h3>
-            <p className="text-xs text-slate-500">Panduan untuk dikembangkan lebih lanjut</p>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div>
-            <h4 className="text-sm font-semibold text-slate-800 mb-3">1. Komponen Layar (UI Elements)</h4>
-            <ul className="list-disc pl-5 space-y-2 text-sm text-slate-600">
-              <li>Tombol <strong>&quot;Tambah Kategori Baru&quot;</strong> (membuka modal form input).</li>
-              <li>Kolom Pencarian (Search Bar).</li>
-              <li>Tabel Data Kategori.</li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-sm font-semibold text-slate-800 mb-3">2. Kolom (Field) Tabel Data</h4>
-            <ul className="list-disc pl-5 space-y-2 text-sm text-slate-600">
-              <li><strong>Nama Kategori</strong> (Contoh: Susu Formula, Popok, Pakaian).</li>
-              <li><strong>Deskripsi Singkat</strong> (Opsional).</li>
-              <li><strong>Jumlah Produk</strong> (Angka indikator berapa banyak produk di kategori ini).</li>
-              <li><strong>Aksi</strong> (Tombol Edit dan Hapus).</li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-sm font-semibold text-slate-800 mb-3">3. Perilaku Khusus &amp; Validasi</h4>
-            <ul className="list-disc pl-5 space-y-2 text-sm text-slate-600">
-              <li><strong>Validasi Nama:</strong> Mencegah pembuatan nama kategori yang ganda/duplikat.</li>
-              <li><strong>Pencegahan Hapus:</strong> Jika kategori akan dihapus, sistem harus menolak apabila masih ada produk aktif yang terkait dengan kategori tersebut.</li>
-            </ul>
-          </div>
+      {/* Content */}
+      <div className="card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="text-left py-3 px-4 text-xs font-medium text-slate-500">Nama Kategori</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-slate-500">Slug</th>
+                <th className="text-center py-3 px-4 text-xs font-medium text-slate-500 w-32">Total Produk</th>
+                <th className="w-20" />
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <tr key={i} className="border-b border-slate-100 animate-pulse">
+                    <td className="py-3 px-4"><div className="h-4 bg-slate-100 rounded w-48" /></td>
+                    <td className="py-3 px-4"><div className="h-4 bg-slate-100 rounded w-32" /></td>
+                    <td className="py-3 px-4"><div className="h-4 bg-slate-100 rounded w-12 mx-auto" /></td>
+                    <td />
+                  </tr>
+                ))
+              ) : categories.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="text-center py-12 text-sm text-slate-400">
+                    <div className="flex flex-col items-center gap-2">
+                      <Tag className="w-8 h-8 text-slate-200" />
+                      <p>Belum ada kategori. Silakan tambahkan kategori baru.</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                categories.map((cat) => (
+                  <tr key={cat.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                    <td className="py-3 px-4 font-medium text-slate-800">{cat.name}</td>
+                    <td className="py-3 px-4 text-slate-500 font-mono text-xs">{cat.slug}</td>
+                    <td className="py-3 px-4 text-center">
+                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">
+                        {cat.productCount} produk
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      {/* Placeholder for future edit/delete actions */}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
+
+      {/* Modal Tambah Kategori */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="font-bold text-slate-800">Tambah Kategori Baru</h3>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={handleCreate} className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1.5">Nama Kategori <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                  placeholder="Contoh: Susu Formula"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-baby-500 focus:border-baby-500 text-sm"
+                />
+              </div>
+              
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving || !newCatName.trim()}
+                  className="px-4 py-2 flex items-center gap-2 text-sm font-medium text-white bg-baby-600 rounded-md hover:bg-baby-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {isSaving ? 'Menyimpan...' : 'Simpan'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

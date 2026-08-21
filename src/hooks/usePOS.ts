@@ -9,6 +9,9 @@ const createEmptyCart = (): POSCart => ({
   items: [],
   subtotal: 0,
   discount: 0,
+  manualCartDiscount: 0,
+  manualCartDiscountType: 'nominal',
+  manualCartDiscountValue: 0,
   total: 0,
 });
 
@@ -22,13 +25,31 @@ export function usePOS(settings: Record<string, string> = {}) {
     }
   }, []);
 
-  const calculateCart = (items: CartItem[]): POSCart => {
+  const calculateCart = (items: CartItem[], cartDiscountType: 'nominal' | 'percent' = 'nominal', cartDiscountValue: number = 0): POSCart => {
     // subtotal = original price * quantity
     const subtotal = items.reduce((acc, item) => acc + item.originalPrice * item.quantity, 0);
     // discount = total discount per item * quantity
     const discount = items.reduce((acc, item) => acc + item.discount * item.quantity, 0);
-    const total = subtotal - discount;
-    return { items, subtotal, discount, total };
+
+    // Calculate cart-level manual discount
+    let manualCartDiscount = 0;
+    const afterItemDiscount = subtotal - discount;
+    if (cartDiscountType === 'nominal') {
+      manualCartDiscount = Math.min(cartDiscountValue, afterItemDiscount);
+    } else {
+      manualCartDiscount = Math.floor(afterItemDiscount * (cartDiscountValue / 100));
+    }
+
+    const total = afterItemDiscount - manualCartDiscount;
+    return {
+      items,
+      subtotal,
+      discount,
+      manualCartDiscount,
+      manualCartDiscountType: cartDiscountType,
+      manualCartDiscountValue: cartDiscountValue,
+      total,
+    };
   };
 
   const updateCurrentTab = useCallback((updater: (cart: POSCart) => CartItem[]) => {
@@ -36,7 +57,7 @@ export function usePOS(settings: Record<string, string> = {}) {
       const newTabs = [...prev];
       const currentCart = newTabs[activeTab];
       const newItems = updater(currentCart);
-      newTabs[activeTab] = calculateCart(newItems);
+      newTabs[activeTab] = calculateCart(newItems, currentCart.manualCartDiscountType, currentCart.manualCartDiscountValue);
       return newTabs;
     });
   }, [activeTab]);
@@ -71,6 +92,10 @@ export function usePOS(settings: Record<string, string> = {}) {
             originalPrice: product.sellPrice,
             unitPrice: finalPrice,
             discount: discountAmount,
+            autoDiscount: discountAmount,
+            manualDiscount: 0,
+            manualDiscountType: 'nominal' as const,
+            manualDiscountValue: 0,
             quantity: 1,
             stock: product.stock,
             unit: product.unit,
@@ -123,6 +148,44 @@ export function usePOS(settings: Record<string, string> = {}) {
     clearTab(activeTab);
   }, [activeTab, clearTab]);
 
+  /** Apply manual discount to a specific cart item */
+  const applyItemDiscount = useCallback((cartItemId: string, type: 'nominal' | 'percent', value: number) => {
+    updateCurrentTab((cart) => {
+      return cart.items.map((item) => {
+        if (item.id !== cartItemId) return item;
+
+        let manualDiscountAmount = 0;
+        if (type === 'nominal') {
+          manualDiscountAmount = Math.min(value, item.originalPrice);
+        } else {
+          manualDiscountAmount = Math.floor(item.originalPrice * (value / 100));
+        }
+
+        const totalDiscount = item.autoDiscount + manualDiscountAmount;
+        const finalPrice = item.originalPrice - totalDiscount;
+
+        return {
+          ...item,
+          manualDiscount: manualDiscountAmount,
+          manualDiscountType: type,
+          manualDiscountValue: value,
+          discount: totalDiscount,
+          unitPrice: Math.max(0, finalPrice),
+        };
+      });
+    });
+  }, [updateCurrentTab]);
+
+  /** Apply manual discount to the entire cart */
+  const applyCartDiscount = useCallback((type: 'nominal' | 'percent', value: number) => {
+    setTabs((prev) => {
+      const newTabs = [...prev];
+      const currentCart = newTabs[activeTab];
+      newTabs[activeTab] = calculateCart(currentCart.items, type, value);
+      return newTabs;
+    });
+  }, [activeTab]);
+
   return {
     tabs,
     activeTab,
@@ -134,5 +197,7 @@ export function usePOS(settings: Record<string, string> = {}) {
     removeFromCart,
     clearCurrentTab,
     clearTab,
+    applyItemDiscount,
+    applyCartDiscount,
   };
 }

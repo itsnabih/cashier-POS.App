@@ -81,7 +81,7 @@ export function ReceiptModal({ isOpen, onClose, transaction, storeName: propStor
     };
   });
 
-  const totalDiscount = cart.items.reduce((sum, item) => sum + (item.discount * item.quantity), 0) + (cart.discount || 0);
+  const totalDiscount = cart.items.reduce((sum, item) => sum + (item.discount * item.quantity), 0) + (cart.manualCartDiscount || 0);
 
   const receiptProps = {
     storeName: storeSettings.storeName,

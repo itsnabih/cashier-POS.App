@@ -7,6 +7,7 @@ import { ProductSearch } from '@/components/pos/ProductSearch';
 import { CartPanel } from '@/components/pos/CartPanel';
 import { PaymentModal } from '@/components/pos/PaymentModal';
 import { ReceiptModal, type CompletedTransaction } from '@/components/pos/ReceiptModal';
+import { DiscountModal } from '@/components/pos/DiscountModal';
 import { usePOS } from '@/hooks/usePOS';
 import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut';
 import { useToast } from '@/hooks/useToast';
@@ -24,6 +25,9 @@ export default function PosPage() {
   const { isOnline, searchOfflineProducts } = useCatalogSync();
   const [isMounted, setIsMounted] = useState(false);
   const { user } = useAuth();
+
+  // Discount modal state
+  const [discountTarget, setDiscountTarget] = useState<{ type: 'item' | 'cart'; cartItemId?: string } | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -108,20 +112,22 @@ export default function PosPage() {
   useBarcodeScanner({
     onScan: handleBarcodeScan,
     minChars: 4,
-    enabled: !isPaymentModalOpen,
+    enabled: !isPaymentModalOpen && !discountTarget,
   });
+
+  const isAnyModalOpen = isPaymentModalOpen || !!discountTarget;
 
   // ---- Global Keyboard Shortcuts ----
   useKeyboardShortcut([
-    { options: { key: 'F1', preventDefault: true, enabled: !isPaymentModalOpen }, handler: () => pos.switchTab(0) },
-    { options: { key: 'F2', preventDefault: true, enabled: !isPaymentModalOpen }, handler: () => pos.switchTab(1) },
-    { options: { key: 'F3', preventDefault: true, enabled: !isPaymentModalOpen }, handler: () => pos.switchTab(2) },
-    { options: { key: 'F4', preventDefault: true, enabled: !isPaymentModalOpen }, handler: () => pos.switchTab(3) },
-    { options: { key: 'F5', preventDefault: true, enabled: !isPaymentModalOpen }, handler: () => pos.switchTab(4) },
+    { options: { key: 'F1', preventDefault: true, enabled: !isAnyModalOpen }, handler: () => pos.switchTab(0) },
+    { options: { key: 'F2', preventDefault: true, enabled: !isAnyModalOpen }, handler: () => pos.switchTab(1) },
+    { options: { key: 'F3', preventDefault: true, enabled: !isAnyModalOpen }, handler: () => pos.switchTab(2) },
+    { options: { key: 'F4', preventDefault: true, enabled: !isAnyModalOpen }, handler: () => pos.switchTab(3) },
+    { options: { key: 'F5', preventDefault: true, enabled: !isAnyModalOpen }, handler: () => pos.switchTab(4) },
     {
       options: { key: 'F12', preventDefault: true },
       handler: () => {
-        if (pos.currentCart.items.length > 0 && !isPaymentModalOpen) {
+        if (pos.currentCart.items.length > 0 && !isAnyModalOpen) {
           setPaymentModalOpen(true);
         }
       },
@@ -132,7 +138,7 @@ export default function PosPage() {
       handler: (e) => {
         const target = e.target as HTMLElement;
         if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
-          if (pos.currentCart.items.length > 0 && !isPaymentModalOpen) {
+          if (pos.currentCart.items.length > 0 && !isAnyModalOpen) {
             setPaymentModalOpen(true);
           }
         }
@@ -142,7 +148,7 @@ export default function PosPage() {
     {
       options: { key: 'Delete', ctrlKey: true, preventDefault: true },
       handler: () => {
-        if (pos.currentCart.items.length > 0 && !isPaymentModalOpen) {
+        if (pos.currentCart.items.length > 0 && !isAnyModalOpen) {
           if (window.confirm('Yakin ingin mengosongkan keranjang di tab ini?')) {
             pos.clearCurrentTab();
           }
@@ -166,7 +172,7 @@ export default function PosPage() {
         subtotal: (item.originalPrice * item.quantity) - (item.discount * item.quantity),
       })),
       subtotal: cart.subtotal,
-      discount: cart.discount,
+      discount: cart.discount + cart.manualCartDiscount,
       total: cart.total,
       paymentMethod: method,
       paymentAmount: amount,
@@ -233,6 +239,52 @@ export default function PosPage() {
     pos.clearCurrentTab();
   };
 
+  // ---- Discount Handlers ----
+  const handleOpenItemDiscount = (cartItemId: string) => {
+    setDiscountTarget({ type: 'item', cartItemId });
+  };
+
+  const handleOpenCartDiscount = () => {
+    setDiscountTarget({ type: 'cart' });
+  };
+
+  const handleApplyDiscount = (type: 'nominal' | 'percent', value: number) => {
+    if (!discountTarget) return;
+    if (discountTarget.type === 'item' && discountTarget.cartItemId) {
+      pos.applyItemDiscount(discountTarget.cartItemId, type, value);
+    } else {
+      pos.applyCartDiscount(type, value);
+    }
+  };
+
+  // Compute discount modal props
+  const getDiscountModalProps = () => {
+    if (!discountTarget) return null;
+
+    if (discountTarget.type === 'item' && discountTarget.cartItemId) {
+      const item = pos.currentCart.items.find((i) => i.id === discountTarget.cartItemId);
+      if (!item) return null;
+      return {
+        itemName: item.name,
+        currentPrice: item.originalPrice,
+        existingValue: item.manualDiscountValue,
+        existingType: item.manualDiscountType,
+      };
+    }
+
+    // Cart-level
+    const cart = pos.currentCart;
+    const afterItemDiscount = cart.subtotal - cart.discount;
+    return {
+      itemName: null,
+      currentPrice: afterItemDiscount,
+      existingValue: cart.manualCartDiscountValue,
+      existingType: cart.manualCartDiscountType,
+    };
+  };
+
+  const discountModalProps = getDiscountModalProps();
+
   if (!isMounted) {
     return null; // Skip SSR to prevent hydration errors for heavily dynamic POS UI
   }
@@ -252,7 +304,7 @@ export default function PosPage() {
                 onAddProduct={pos.addToCart}
                 isOnline={isOnline}
                 searchOffline={searchOfflineProducts}
-                disabled={isPaymentModalOpen}
+                disabled={isAnyModalOpen}
                 settings={settings}
               />
             </div>
@@ -265,6 +317,8 @@ export default function PosPage() {
             onRemoveItem={pos.removeFromCart}
             onClearCart={pos.clearCurrentTab}
             onPay={() => setPaymentModalOpen(true)}
+            onItemDiscount={handleOpenItemDiscount}
+            onCartDiscount={handleOpenCartDiscount}
           />
         }
       />
@@ -284,6 +338,18 @@ export default function PosPage() {
           onClose={handleCloseReceipt}
           transaction={completedTx}
           storeName={settings?.storeName || 'BabyPOS'}
+        />
+      )}
+
+      {discountTarget && discountModalProps && (
+        <DiscountModal
+          isOpen={true}
+          onClose={() => setDiscountTarget(null)}
+          onApply={handleApplyDiscount}
+          itemName={discountModalProps.itemName}
+          currentPrice={discountModalProps.currentPrice}
+          existingValue={discountModalProps.existingValue}
+          existingType={discountModalProps.existingType}
         />
       )}
     </>

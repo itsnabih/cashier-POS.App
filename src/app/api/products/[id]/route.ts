@@ -53,7 +53,7 @@ export async function GET(
 
 const UpdateProductSchema = z.object({
   name: z.string().min(1).max(200).transform(sanitizeString).optional(),
-  categoryId: z.string().uuid().nullable().optional(),
+  categoryId: z.string().uuid('Kategori wajib dipilih').optional(),
   sku: z.string().max(50).transform(sanitizeString).nullable().optional(),
   barcode: z.string().max(50).transform(sanitizeString).nullable().optional(),
   description: z.string().max(1000).transform(sanitizeString).nullable().optional(),
@@ -91,6 +91,12 @@ export async function PUT(
     if (!existing) return apiNotFound('Produk tidak ditemukan');
 
     const d = parsed.data;
+
+    // Check duplicate name (exclude self)
+    if (d.name) {
+      const dup = await queryOne<{ id: string }>('SELECT id FROM products WHERE name ILIKE $1 AND id != $2', [d.name, cleanId]);
+      if (dup) return apiBadRequest('Nama produk sudah digunakan');
+    }
 
     // Check duplicate SKU/barcode (exclude self)
     if (d.sku !== undefined && d.sku !== null) {

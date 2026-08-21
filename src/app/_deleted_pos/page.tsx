@@ -100,6 +100,8 @@ export default function PosPage() {
             onRemoveItem={pos.removeFromCart}
             onClearCart={pos.clearCurrentTab}
             onPay={() => setPaymentModalOpen(true)}
+            onItemDiscount={() => {}}
+            onCartDiscount={() => {}}
           />
         }
       />
